@@ -5,10 +5,29 @@ const http = require('http');
 
 const app = express();
 
+// Serve static files (the mini dashboard)
+app.use(express.static(__dirname));
+
+// Serve React app files with correct MIME types
+app.use('/src', express.static(path.join(__dirname, 'src'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.jsx')) {
+      res.setHeader('Content-Type', 'text/javascript');
+    }
+  }
+}));
+
+// Serve mini dashboard as main route
 app.get('/', (req, res) => {
   res.send('Trading Dashboard Running');
 });
 
+// Serve mini dashboard on a separate route
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
+});
+
+// Create server and Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -20,20 +39,12 @@ const io = new Server(server, {
 // Import Core7Tracker
 const Core7Tracker = require('./src/core7Tracker');
 
-// Serve static files (the mini dashboard)
-app.use(express.static(__dirname));
-
-// Serve the mini dashboard on a separate route
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
-});
-
 // Initialize Core7Tracker
 const tracker = new Core7Tracker();
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('🔌 Client connected to dashboard');
+  console.log(' Client connected to dashboard');
   
   // Send initial data
   socket.emit('initial-data', {
@@ -43,7 +54,7 @@ io.on('connection', (socket) => {
 
   // Handle client disconnection
   socket.on('disconnect', () => {
-    console.log('🔌 Client disconnected from dashboard');
+    console.log(' Client disconnected from dashboard');
   });
 });
 
@@ -103,7 +114,7 @@ console.log = (...args) => {
   }
 };
 
-// Start the tracker
+// Start tracker
 tracker.start();
 
 // Start server
