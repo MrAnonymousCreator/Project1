@@ -1,8 +1,8 @@
 import React from 'react';
-import GenericDashboard from './components/GenericDashboard';
+import EnhancedTradingDashboard from './components/EnhancedTradingDashboard';
 
 function App() {
-  return <GenericDashboard />;
+  return <EnhancedTradingDashboard />;
 }
 
 export default App;
