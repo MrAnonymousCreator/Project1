@@ -8,6 +8,7 @@ const app = express();
 app.get('/', (req, res) => {
   res.send('Trading Dashboard Running');
 });
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -22,8 +23,8 @@ const Core7Tracker = require('./src/core7Tracker');
 // Serve static files (the mini dashboard)
 app.use(express.static(__dirname));
 
-// Serve the mini dashboard as the main route
-app.get('/', (req, res) => {
+// Serve the mini dashboard on a separate route
+app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
 });
 
@@ -106,10 +107,9 @@ console.log = (...args) => {
 tracker.start();
 
 // Start server
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
-  console.log(`🚀 Trading Dashboard Server running on http://localhost:${PORT}`);
-  console.log(`📊 Open http://localhost:${PORT} to view the dashboard`);
+  console.log(`Server running on ${PORT}`);
 });
 
 // Graceful shutdown
