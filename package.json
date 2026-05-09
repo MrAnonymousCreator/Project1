@@ -5,12 +5,13 @@
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node src/server.js",
     "dev": "nodemon src/index.js",
     "test": "jest",
     "dashboard": "BROWSER=none npm start",
     "server": "node src/server.js",
-    "dev-dashboard": "concurrently \"npm run server\" \"npm run dashboard\""
+    "dev-dashboard": "concurrently \"npm run server\" \"npm run dashboard\"",
+    "build": "echo 'Backend build complete'"
   },
   "keywords": [
     "trading",
