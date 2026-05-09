@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Signal Dashboard</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0f1419;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #2a3441;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: #22c55e;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Market Sentiment */
+        .sentiment-card {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #2a3441;
+        }
+
+        .sentiment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .sentiment-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .sentiment-badge {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .sentiment-bullish {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .sentiment-bearish {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .sentiment-neutral {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        /* Coin Cards */
+        .coins-section {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #2a3441;
+        }
+
+        .coins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .coin-card {
+            background: #0f1419;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #2a3441;
+            transition: all 0.3s ease;
+        }
+
+        .coin-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+
+        .coin-symbol {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .coin-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .coin-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .coin-rsi {
+            color: #9ca3af;
+        }
+
+        .coin-trend {
+            font-weight: 600;
+        }
+
+        .trend-up {
+            color: #22c55e;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .trend-neutral {
+            color: #9ca3af;
+        }
+
+        /* Live Feed */
+        .feed-section {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #2a3441;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .feed-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .feed-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feed-item {
+            background: #0f1419;
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 3px solid #3b82f6;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .feed-item:hover {
+            background: #1a2332;
+        }
+
+        .feed-time {
+            color: #6b7280;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .feed-message {
+            color: #ffffff;
+        }
+
+        .feed-alert {
+            border-left-color: #ef4444;
+        }
+
+        .feed-milestone {
+            border-left-color: #f59e0b;
+        }
+
+        .feed-signal {
+            border-left-color: #22c55e;
+        }
+
+        /* Performance Stats */
+        .stats-section {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #2a3441;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: #0f1419;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #2a3441;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .stat-positive {
+            color: #22c55e;
+        }
+
+        .stat-negative {
+            color: #ef4444;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1f2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        /* Control Buttons */
+        .control-btn {
+            padding: 8px 16px;
+            background: #1a1f2e;
+            border: 1px solid #2a3441;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .control-btn:hover {
+            background: #2a3441;
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .control-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        /* Table Styles */
+        table tbody tr {
+            border-bottom: 1px solid #2a3441;
+            transition: background 0.2s ease;
+        }
+
+        table tbody tr:hover {
+            background: #1a2332;
+        }
+
+        table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        table tbody td {
+            padding: 12px;
+            color: #ffffff;
+            font-size: 13px;
+        }
+
+        .result-success {
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .result-failure {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .result-pending {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        /* Light Theme */
+        body.light-theme {
+            background: #ffffff;
+            color: #1f2937;
+        }
+
+        body.light-theme .header,
+        body.light-theme .sentiment-card,
+        body.light-theme .coins-section,
+        body.light-theme .feed-section,
+        body.light-theme .stats-section {
+            background: #f9fafb;
+            border-color: #e5e7eb;
+        }
+
+        body.light-theme .coin-card,
+        body.light-theme .stat-card,
+        body.light-theme .feed-item {
+            background: #ffffff;
+            border-color: #e5e7eb;
+        }
+
+        body.light-theme .control-btn {
+            background: #ffffff;
+            border-color: #e5e7eb;
+            color: #1f2937;
+        }
+
+        body.light-theme .control-btn:hover {
+            background: #f3f4f6;
+            border-color: #3b82f6;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .feed-item {
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .coins-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            table {
+                font-size: 11px;
+            }
+            
+            .control-btn {
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Trading Signal Dashboard</h1>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="connection-status">CONNECTING...</span>
+            </div>
+        </div>
+
+        <!-- Market Sentiment -->
+        <div class="sentiment-card">
+            <div class="sentiment-header">
+                <div class="sentiment-title">Market Sentiment</div>
+                <div id="sentiment-badge" class="sentiment-badge sentiment-neutral">NEUTRAL</div>
+            </div>
+            <div style="display: flex; gap: 20px; font-size: 14px;">
+                <div>Score: <span id="sentiment-score" style="font-weight: 600;">0.00%</span></div>
+                <div>Active Alerts: <span id="active-alerts" style="font-weight: 600;">0</span></div>
+                <div>BTC Dominance: <span id="btc-dominance" style="font-weight: 600;">0.0%</span></div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Coins Section -->
+            <div class="coins-section">
+                <div class="sentiment-title">Market Overview</div>
+                <div class="coins-grid" id="coins-grid">
+                    <!-- Coin cards will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Live Feed -->
+            <div class="feed-section">
+                <div class="feed-header">
+                    <div class="feed-title">Live Feed</div>
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span>LIVE</span>
+                    </div>
+                </div>
+                <div class="feed-items" id="live-feed">
+                    <div class="feed-item">
+                        <div class="feed-time">Loading...</div>
+                        <div class="feed-message">Connecting to signal server...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Stats -->
+        <div class="stats-section">
+            <div class="sentiment-title">Signal Performance</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div id="win-rate" class="stat-value">0.0%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div id="avg-peak" class="stat-value stat-positive">+0.0%</div>
+                    <div class="stat-label">Avg Peak</div>
+                </div>
+                <div class="stat-card">
+                    <div id="avg-dip" class="stat-value stat-negative">-0.0%</div>
+                    <div class="stat-label">Avg Dip</div>
+                </div>
+                <div class="stat-card">
+                    <div id="total-signals" class="stat-value">0</div>
+                    <div class="stat-label">Total Signals</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signal History Table -->
+        <div class="stats-section">
+            <div class="sentiment-title">Recent Signal History</div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #0f1419;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #2a3441; color: #9ca3af; font-size: 12px;">Coin</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #2a3441; color: #9ca3af; font-size: 12px;">Signal</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #2a3441; color: #9ca3af; font-size: 12px;">Result</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #2a3441; color: #9ca3af; font-size: 12px;">Peak</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #2a3441; color: #9ca3af; font-size: 12px;">Dip</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #2a3441; color: #9ca3af; font-size: 12px;">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signal-history">
+                        <tr>
+                            <td colspan="6" style="padding: 20px; text-align: center; color: #6b7280;">
+                                No signal history available yet
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="stats-section">
+            <div class="sentiment-title">Control Panel</div>
+            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                <button onclick="toggleAutoRefresh()" id="auto-refresh-btn" class="control-btn active">
+                    🔄 Auto Refresh: ON
+                </button>
+                <button onclick="clearFeed()" class="control-btn">
+                    🗑️ Clear Feed
+                </button>
+                <button onclick="exportData()" class="control-btn">
+                    📊 Export Data
+                </button>
+                <button onclick="toggleTheme()" class="control-btn">
+                    🌙 Toggle Theme
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Socket.IO connection
+        const socket = io();
+        
+        // Data state
+        let marketData = {
+            sentiment: 'NEUTRAL',
+            sentimentScore: 0,
+            activeAlerts: 0,
+            btcDominance: 0
+        };
+
+        let coins = [
+            { symbol: 'BTCUSDT', price: 0, rsi: 50, trend: 'NEUTRAL', signal: 'NONE', change24h: 0 },
+            { symbol: 'SOLUSDT', price: 0, rsi: 50, trend: 'NEUTRAL', signal: 'NONE', change24h: 0 },
+            { symbol: 'DOGEUSDT', price: 0, rsi: 50, trend: 'NEUTRAL', signal: 'NONE', change24h: 0 },
+            { symbol: 'AVAXUSDT', price: 0, rsi: 50, trend: 'NEUTRAL', signal: 'NONE', change24h: 0 },
+            { symbol: 'LINKUSDT', price: 0, rsi: 50, trend: 'NEUTRAL', signal: 'NONE', change24h: 0 }
+        ];
+
+        let liveFeed = [];
+        let signalHistory = [];
+        let performance = {
+            winRate: 0,
+            avgPeak: 0,
+            avgDip: 0,
+            totalSignals: 0
+        };
+
+        let autoRefresh = true;
+        let refreshInterval;
+        let isDarkTheme = true;
+
+        // Socket event handlers
+        socket.on('connect', () => {
+            console.log('Connected to trading signals server');
+            document.getElementById('connection-status').textContent = 'CONNECTED';
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from trading signals server');
+            document.getElementById('connection-status').textContent = 'DISCONNECTED';
+        });
+
+        socket.on('market-sentiment', (data) => {
+            updateMarketSentiment(data);
+        });
+
+        socket.on('signal', (data) => {
+            addLiveFeedItem(data.message, 'signal');
+        });
+
+        socket.on('milestone', (data) => {
+            addLiveFeedItem(data.message, 'milestone');
+        });
+
+        socket.on('alert', (data) => {
+            addLiveFeedItem(data.message, 'alert');
+        });
+
+        socket.on('performance-update', (data) => {
+            addLiveFeedItem(data.message, 'milestone');
+        });
+
+        // Update functions
+        function updateMarketSentiment(data) {
+            marketData = { ...marketData, ...data };
+            renderMarketSentiment();
+        }
+
+        function renderMarketSentiment() {
+            const badge = document.getElementById('sentiment-badge');
+            const score = document.getElementById('sentiment-score');
+            const alerts = document.getElementById('active-alerts');
+            const dominance = document.getElementById('btc-dominance');
+
+            // Update sentiment badge
+            badge.className = 'sentiment-badge';
+            if (marketData.sentiment.includes('BULLISH')) {
+                badge.classList.add('sentiment-bullish');
+            } else if (marketData.sentiment.includes('BEARISH')) {
+                badge.classList.add('sentiment-bearish');
+            } else {
+                badge.classList.add('sentiment-neutral');
+            }
+            badge.textContent = marketData.sentiment.replace('_', ' ');
+
+            // Update stats
+            score.textContent = marketData.sentimentScore >= 0 ? 
+                `+${marketData.sentimentScore.toFixed(2)}%` : 
+                `${marketData.sentimentScore.toFixed(2)}%`;
+            alerts.textContent = marketData.activeAlerts;
+            dominance.textContent = `${marketData.btcDominance.toFixed(1)}%`;
+        }
+
+        function renderCoins() {
+            const grid = document.getElementById('coins-grid');
+            grid.innerHTML = '';
+
+            coins.forEach(coin => {
+                const card = document.createElement('div');
+                card.className = 'coin-card';
+                
+                const trendClass = coin.trend === 'BULLISH' ? 'trend-up' : 
+                                   coin.trend === 'BEARISH' ? 'trend-down' : 'trend-neutral';
+                
+                const signalColor = coin.signal.includes('Oversold') || coin.signal.includes('Golden Cross') ? 
+                                  '#22c55e' : 
+                                  coin.signal.includes('Overbought') || coin.signal.includes('Death Cross') ? 
+                                  '#ef4444' : '#9ca3af';
+
+                card.innerHTML = `
+                    <div class="coin-symbol">${coin.symbol}</div>
+                    <div class="coin-price">$${coin.price.toFixed(2)}</div>
+                    <div class="coin-stats">
+                        <div class="coin-rsi">RSI: ${coin.rsi.toFixed(0)}</div>
+                        <div class="coin-trend ${trendClass}">${coin.trend}</div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: ${signalColor};">
+                        ${coin.signal}
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function addLiveFeedItem(message, type = 'signal') {
+            const feed = document.getElementById('live-feed');
+            const item = document.createElement('div');
+            item.className = `feed-item feed-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            item.innerHTML = `
+                <div class="feed-time">${timestamp}</div>
+                <div class="feed-message">${message}</div>
+            `;
+            
+            feed.insertBefore(item, feed.firstChild);
+            
+            // Keep only last 20 items
+            while (feed.children.length > 20) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        function updatePerformance() {
+            document.getElementById('win-rate').textContent = `${performance.winRate.toFixed(1)}%`;
+            document.getElementById('avg-peak').textContent = `+${performance.avgPeak.toFixed(1)}%`;
+            document.getElementById('avg-dip').textContent = `${performance.avgDip.toFixed(1)}%`;
+            document.getElementById('total-signals').textContent = performance.totalSignals;
+        }
+
+        function updateSignalHistory() {
+            const tbody = document.getElementById('signal-history');
+            tbody.innerHTML = '';
+
+            if (signalHistory.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 20px; text-align: center; color: #6b7280;">
+                            No signal history available yet
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            signalHistory.slice(0, 10).forEach(signal => {
+                const row = document.createElement('tr');
+                const resultClass = signal.result === 'SUCCESS' ? 'result-success' : 
+                                   signal.result === 'FAILURE' ? 'result-failure' : 'result-pending';
+                
+                row.innerHTML = `
+                    <td>${signal.coin}</td>
+                    <td>${signal.signal}</td>
+                    <td class="${resultClass}">${signal.result}</td>
+                    <td>+${signal.peak.toFixed(2)}%</td>
+                    <td>${signal.dip.toFixed(2)}%</td>
+                    <td>${signal.time}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            const btn = document.getElementById('auto-refresh-btn');
+            
+            if (autoRefresh) {
+                btn.textContent = '🔄 Auto Refresh: ON';
+                btn.classList.add('active');
+                startSimulation();
+            } else {
+                btn.textContent = '🔄 Auto Refresh: OFF';
+                btn.classList.remove('active');
+                stopSimulation();
+            }
+        }
+
+        function clearFeed() {
+            const feed = document.getElementById('live-feed');
+            feed.innerHTML = `
+                <div class="feed-item">
+                    <div class="feed-time">${new Date().toLocaleTimeString()}</div>
+                    <div class="feed-message">Feed cleared</div>
+                </div>
+            `;
+            liveFeed = [];
+        }
+
+        function exportData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                marketData,
+                coins,
+                signalHistory,
+                performance,
+                liveFeed: liveFeed.slice(0, 20)
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trading-dashboard-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            addLiveFeedItem('📊 Data exported successfully', 'signal');
+        }
+
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            document.body.classList.toggle('light-theme');
+            addLiveFeedItem(`🌙 Theme changed to ${isDarkTheme ? 'dark' : 'light'}`, 'signal');
+        }
+
+        function startSimulation() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            
+            refreshInterval = setInterval(() => {
+                // Update market sentiment
+                const sentiments = ['BEARISH', 'BULLISH', 'FLAT', 'SLIGHTLY_BULLISH', 'SLIGHTLY_BEARISH'];
+                marketData.sentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
+                marketData.sentimentScore = (Math.random() - 0.5) * 2;
+                marketData.activeAlerts = Math.floor(Math.random() * 10);
+                marketData.btcDominance = 45 + Math.random() * 10;
+                renderMarketSentiment();
+
+                // Update coins
+                coins.forEach(coin => {
+                    coin.price += (Math.random() - 0.5) * 100;
+                    coin.rsi = Math.max(0, Math.min(100, coin.rsi + (Math.random() - 0.5) * 5));
+                    coin.trend = ['BULLISH', 'BEARISH', 'NEUTRAL'][Math.floor(Math.random() * 3)];
+                    coin.signal = ['RSI Oversold', 'Golden Cross', 'Volume Spike', 'NONE'][Math.floor(Math.random() * 4)];
+                    coin.change24h = (Math.random() - 0.5) * 10;
+                });
+                renderCoins();
+
+                // Update performance
+                performance.winRate = 55 + Math.random() * 20;
+                performance.avgPeak = 1.0 + Math.random() * 2;
+                performance.avgDip = -0.5 - Math.random() * 2;
+                performance.totalSignals += Math.floor(Math.random() * 3);
+                updatePerformance();
+
+                // Add random signal to history
+                if (Math.random() > 0.8) {
+                    const coin = coins[Math.floor(Math.random() * coins.length)];
+                    const signal = {
+                        coin: coin.symbol,
+                        signal: coin.signal,
+                        result: ['SUCCESS', 'FAILURE', 'PENDING'][Math.floor(Math.random() * 3)],
+                        peak: Math.random() * 3,
+                        dip: -Math.random() * 2,
+                        time: new Date().toLocaleTimeString()
+                    };
+                    signalHistory.unshift(signal);
+                    if (signalHistory.length > 20) signalHistory.pop();
+                    updateSignalHistory();
+                }
+
+                // Add random feed items
+                const events = [
+                    '📈 BTC breakout detected',
+                    '📉 AVAX bearish momentum',
+                    '⚠️ DOGE hit -3.5% dip',
+                    '🚨 SOL RSI Overbought',
+                    '💪 LINK Golden Cross confirmed'
+                ];
+                
+                if (Math.random() > 0.7) {
+                    const event = events[Math.floor(Math.random() * events.length)];
+                    const type = ['alert', 'milestone', 'signal'][Math.floor(Math.random() * 3)];
+                    addLiveFeedItem(event, type);
+                }
+            }, 3000);
+        }
+
+        function stopSimulation() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // Simulate data updates (replace with real socket events)
+        function simulateDataUpdates() {
+            setInterval(() => {
+                // Update market sentiment
+                const sentiments = ['BEARISH', 'BULLISH', 'FLAT', 'SLIGHTLY_BULLISH', 'SLIGHTLY_BEARISH'];
+                marketData.sentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
+                marketData.sentimentScore = (Math.random() - 0.5) * 2;
+                marketData.activeAlerts = Math.floor(Math.random() * 10);
+                marketData.btcDominance = 45 + Math.random() * 10;
+                renderMarketSentiment();
+
+                // Update coins
+                coins.forEach(coin => {
+                    coin.price += (Math.random() - 0.5) * 100;
+                    coin.rsi = Math.max(0, Math.min(100, coin.rsi + (Math.random() - 0.5) * 5));
+                    coin.trend = ['BULLISH', 'BEARISH', 'NEUTRAL'][Math.floor(Math.random() * 3)];
+                    coin.signal = ['RSI Oversold', 'Golden Cross', 'Volume Spike', 'NONE'][Math.floor(Math.random() * 4)];
+                    coin.change24h = (Math.random() - 0.5) * 10;
+                });
+                renderCoins();
+
+                // Update performance
+                performance.winRate = 55 + Math.random() * 20;
+                performance.avgPeak = 1.0 + Math.random() * 2;
+                performance.avgDip = -0.5 - Math.random() * 2;
+                performance.totalSignals += Math.floor(Math.random() * 3);
+                updatePerformance();
+
+                // Add random feed items
+                const events = [
+                    '📈 BTC breakout detected',
+                    '📉 AVAX bearish momentum',
+                    '⚠️ DOGE hit -3.5% dip',
+                    '🚨 SOL RSI Overbought',
+                    '💪 LINK Golden Cross confirmed'
+                ];
+                
+                if (Math.random() > 0.7) {
+                    const event = events[Math.floor(Math.random() * events.length)];
+                    const type = ['alert', 'milestone', 'signal'][Math.floor(Math.random() * 3)];
+                    addLiveFeedItem(event, type);
+                }
+            }, 3000);
+        }
+
+        // Initialize
+        renderMarketSentiment();
+        renderCoins();
+        updatePerformance();
+        updateSignalHistory();
+        
+        // Start enhanced simulation (remove when connected to real server)
+        if (autoRefresh) {
+            startSimulation();
+        }
+    </script>
+</body>
+</html>
