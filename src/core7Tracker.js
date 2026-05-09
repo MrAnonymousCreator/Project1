@@ -62,14 +62,14 @@ class Core7Tracker {
           limit
         }
       });
-      return response.data.map(kline => ({
+      return response.data ? response.data.map(kline => ({
         timestamp: parseInt(kline[0]),
         open: parseFloat(kline[1]),
         high: parseFloat(kline[2]),
         low: parseFloat(kline[3]),
         close: parseFloat(kline[4]),
         volume: parseFloat(kline[5]),
-      }));
+      })) : null;
     }, 3, `klines for ${symbol}`);
   }
 
@@ -78,7 +78,7 @@ class Core7Tracker {
       const response = await axios.get(`${this.baseUrl}/api/v3/ticker/price`, {
         params: { symbol }
       });
-      return parseFloat(response.data.price);
+      return response.data && response.data.price ? parseFloat(response.data.price) : null;
     }, 3, `price for ${symbol}`);
   }
 
@@ -824,7 +824,10 @@ class Core7Tracker {
   async checkCore7Signals() {
     for (const symbol of this.symbols) {
       const klines = await this.getKlines(symbol, '1h', 500);
-      if (klines.length < 200) continue;
+      if (!klines || klines.length < 200) {
+        console.log(`Skipping ${symbol} due to missing data`);
+        continue;
+      }
 
       const currentPrice = await this.getCurrentPrice(symbol);
       if (!currentPrice) continue;
