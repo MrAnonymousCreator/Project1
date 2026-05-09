@@ -37,6 +37,11 @@ app.get('/react', (req, res) => {
   res.sendFile(path.join(__dirname, 'mini-react.html'));
 });
 
+// Generic dashboard route
+app.get('/generic', (req, res) => {
+  res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
+});
+
 // Create server and Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, {
