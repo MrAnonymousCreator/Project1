@@ -27,6 +27,16 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
 });
 
+// Development route for React app with Vite
+app.get('/dev', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Working React app route
+app.get('/react', (req, res) => {
+  res.sendFile(path.join(__dirname, 'mini-react.html'));
+});
+
 // Create server and Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, {

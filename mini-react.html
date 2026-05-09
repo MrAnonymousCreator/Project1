@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Signal Dashboard - React</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        function App() {
+            const [signals, setSignals] = useState([]);
+            const [marketSentiment, setMarketSentiment] = useState('NEUTRAL');
+            const [sentimentScore, setSentimentScore] = useState(0);
+            const [activeAlerts, setActiveAlerts] = useState(0);
+            const [liveFeed, setLiveFeed] = useState([]);
+            const [connectionStatus, setConnectionStatus] = useState('CONNECTING...');
+            const [lastUpdated, setLastUpdated] = useState(new Date());
+
+            useEffect(() => {
+                const socket = io();
+                
+                socket.on('connect', () => {
+                    console.log('Connected to trading signals server');
+                    setConnectionStatus('CONNECTED');
+                });
+
+                socket.on('disconnect', () => {
+                    console.log('Disconnected from trading signals server');
+                    setConnectionStatus('DISCONNECTED');
+                });
+
+                socket.on('market-sentiment', (data) => {
+                    setMarketSentiment(data.sentiment);
+                    setSentimentScore(data.sentimentScore || 0);
+                });
+
+                socket.on('signal', (data) => {
+                    addLiveFeedItem(data.message, 'signal');
+                });
+
+                socket.on('alert', (data) => {
+                    addLiveFeedItem(data.message, 'alert');
+                });
+
+                socket.on('alert-count', (data) => {
+                    setActiveAlerts(data.count);
+                });
+
+                return () => socket.disconnect();
+            }, []);
+
+            const addLiveFeedItem = (message, type) => {
+                setLiveFeed(prev => [
+                    { message, type, timestamp: new Date() },
+                    ...prev.slice(0, 19)
+                ]);
+                setLastUpdated(new Date());
+            };
+
+            const getStatusColor = (status) => {
+                const colors = {
+                    'Bullish': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+                    'Buy Zone': 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+                    'Momentum': 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+                    'Strong': 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+                    'Watch': 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+                };
+                return colors[status] || 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30';
+            };
+
+            const getSentimentColor = (sentiment) => {
+                if (sentiment.includes('BULLISH')) return 'text-emerald-400';
+                if (sentiment.includes('BEARISH')) return 'text-red-400';
+                return 'text-zinc-400';
+            };
+
+            // Initialize with mock data
+            useEffect(() => {
+                setSignals([
+                    {
+                        coin: 'BTCUSDT',
+                        symbol: '₿',
+                        price: '$43,250.00',
+                        change24h: '+2.34%',
+                        signal: 'Golden Cross',
+                        status: 'Bullish'
+                    },
+                    {
+                        coin: 'SOLUSDT',
+                        symbol: '◎',
+                        price: '$105.50',
+                        change24h: '-1.23%',
+                        signal: 'RSI Oversold',
+                        status: 'Buy Zone'
+                    }
+                ]);
+            }, []);
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-zinc-950 text-white p-6',
+                children: [
+                    React.createElement('header', {
+                        className: 'border-b border-zinc-800 bg-zinc-900/80 backdrop-blur-lg sticky top-0 z-50',
+                        children: [
+                            React.createElement('div', {
+                                className: 'max-w-7xl mx-auto px-6 py-5 flex items-center justify-between',
+                                children: [
+                                    React.createElement('div', {
+                                        className: 'flex items-center gap-4',
+                                        children: [
+                                            React.createElement('div', {
+                                                className: 'w-9 h-9 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-2xl flex items-center justify-center text-2xl',
+                                                children: '📈'
+                                            }),
+                                            React.createElement('div', {
+                                                children: [
+                                                    React.createElement('h1', {
+                                                        className: 'text-3xl font-bold tracking-tighter',
+                                                        children: 'Core Signals'
+                                                    }),
+                                                    React.createElement('p', {
+                                                        className: 'text-zinc-500 text-sm -mt-1',
+                                                        children: 'Live Market Intelligence'
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    }),
+                                    React.createElement('div', {
+                                        className: 'flex items-center gap-6',
+                                        children: [
+                                            React.createElement('div', {
+                                                className: 'flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-2',
+                                                children: [
+                                                    React.createElement('div', {
+                                                        className: `w-2.5 h-2.5 rounded-full animate-pulse ${
+                                                            connectionStatus === 'CONNECTED' ? 'bg-emerald-500' : 
+                                                            connectionStatus === 'CONNECTING' ? 'bg-yellow-500' : 'bg-red-500'
+                                                        }`,
+                                                        children: ''
+                                                    }),
+                                                    React.createElement('span', {
+                                                        className: `text-sm font-medium ${
+                                                            connectionStatus === 'CONNECTED' ? 'text-emerald-400' : 
+                                                            connectionStatus === 'CONNECTING' ? 'text-yellow-400' : 'text-red-400'
+                                                        }`,
+                                                        children: connectionStatus
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    })
+                                ]
+                            })
+                        ]
+                    }),
+                    React.createElement('div', {
+                        className: 'max-w-7xl mx-auto px-6 py-8',
+                        children: [
+                            React.createElement('div', {
+                                className: 'bg-zinc-900/70 border border-zinc-800 rounded-3xl p-8 mb-10',
+                                children: [
+                                    React.createElement('div', {
+                                        className: 'flex items-center justify-between',
+                                        children: [
+                                            React.createElement('div', {
+                                                children: [
+                                                    React.createElement('h2', {
+                                                        className: 'text-2xl font-semibold mb-2',
+                                                        children: 'Market Sentiment'
+                                                    }),
+                                                    React.createElement('div', {
+                                                        className: 'flex items-center gap-6',
+                                                        children: [
+                                                            React.createElement('span', {
+                                                                className: `text-3xl font-bold ${getSentimentColor(marketSentiment)}`,
+                                                                children: marketSentiment.replace('_', ' ')
+                                                            }),
+                                                            React.createElement('span', {
+                                                                className: 'text-zinc-400',
+                                                                children: ` Score: ${sentimentScore >= 0 ? '+' : ''}${sentimentScore.toFixed(2)}%`
+                                                            }),
+                                                            React.createElement('span', {
+                                                                className: 'text-zinc-400',
+                                                                children: ` Active Alerts: ${activeAlerts}`
+                                                            })
+                                                        ]
+                                                    })
+                                                ]
+                                            }),
+                                            React.createElement('div', {
+                                                className: 'text-right',
+                                                children: [
+                                                    React.createElement('p', {
+                                                        className: 'text-sm text-zinc-500',
+                                                        children: 'Last Updated'
+                                                    }),
+                                                    React.createElement('p', {
+                                                        className: 'text-lg font-medium',
+                                                        children: lastUpdated.toLocaleTimeString()
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    })
+                                ]
+                            }),
+                            React.createElement('div', {
+                                className: 'grid grid-cols-1 md:grid-cols-3 gap-6 mb-10',
+                                children: [
+                                    React.createElement('div', {
+                                        className: 'bg-zinc-900/70 border border-zinc-800 rounded-3xl p-8 hover:border-zinc-700 transition-colors',
+                                        children: [
+                                            React.createElement('p', {
+                                                className: 'text-zinc-400 text-sm mb-3',
+                                                children: 'Signals Today'
+                                            }),
+                                            React.createElement('h2', {
+                                                className: 'text-5xl font-semibold tracking-tighter',
+                                                children: '0'
+                                            })
+                                        ]
+                                    }),
+                                    React.createElement('div', {
+                                        className: 'bg-zinc-900/70 border border-zinc-800 rounded-3xl p-8 hover:border-zinc-700 transition-colors',
+                                        children: [
+                                            React.createElement('p', {
+                                                className: 'text-zinc-400 text-sm mb-3',
+                                                children: 'Win Rate'
+                                            }),
+                                            React.createElement('h2', {
+                                                className: 'text-5xl font-semibold tracking-tighter text-emerald-400',
+                                                children: '0%'
+                                            })
+                                        ]
+                                    }),
+                                    React.createElement('div', {
+                                        className: 'bg-zinc-900/70 border border-zinc-800 rounded-3xl p-8 hover:border-zinc-700 transition-colors',
+                                        children: [
+                                            React.createElement('p', {
+                                                className: 'text-zinc-400 text-sm mb-3',
+                                                children: 'Avg Peak'
+                                            }),
+                                            React.createElement('h2', {
+                                                className: 'text-5xl font-semibold tracking-tighter text-emerald-400',
+                                                children: '+0.0%'
+                                            })
+                                        ]
+                                    })
+                                ]
+                            }),
+                            React.createElement('div', {
+                                className: 'bg-zinc-900/70 border border-zinc-800 rounded-3xl overflow-hidden mb-10',
+                                children: [
+                                    React.createElement('div', {
+                                        className: 'px-8 py-6 border-b border-zinc-800 flex items-center justify-between',
+                                        children: [
+                                            React.createElement('h2', {
+                                                className: 'text-2xl font-semibold',
+                                                children: 'Active Signals'
+                                            }),
+                                            React.createElement('p', {
+                                                className: 'text-sm text-zinc-400',
+                                                children: 'Real-time data from backend'
+                                            })
+                                        ]
+                                    }),
+                                    React.createElement('div', {
+                                        className: 'max-h-96 overflow-y-auto',
+                                        children: liveFeed.length === 0 ? 
+                                            React.createElement('div', {
+                                                className: 'p-20 text-center text-zinc-400',
+                                                children: 'Waiting for real-time events from backend...'
+                                            }) :
+                                            React.createElement('div', {
+                                                className: 'divide-y divide-zinc-800',
+                                                children: liveFeed.map((item, index) => 
+                                                    React.createElement('div', {
+                                                        key: index,
+                                                        className: 'px-8 py-4 hover:bg-zinc-800/50 transition-colors',
+                                                        children: [
+                                                            React.createElement('div', {
+                                                                className: 'flex items-start gap-4',
+                                                                children: [
+                                                                    React.createElement('span', {
+                                                                        className: 'text-xs text-zinc-500 mt-1',
+                                                                        children: item.timestamp.toLocaleTimeString()
+                                                                    }),
+                                                                    React.createElement('div', {
+                                                                        className: `text-sm ${
+                                                                            item.type === 'alert' ? 'text-red-400' :
+                                                                            item.type === 'milestone' ? 'text-amber-400' :
+                                                                            'text-emerald-400'
+                                                                        }`,
+                                                                        children: item.message
+                                                                    })
+                                                                ]
+                                                            })
+                                                        ]
+                                                    })
+                                                )
+                                            })
+                                    })
+                                ]
+                            }),
+                            React.createElement('div', {
+                                className: 'mt-10 text-center text-xs text-zinc-500',
+                                children: 'Real-time data from Core7Tracker backend • Socket.IO connection'
+                            })
+                        ]
+                    })
+                ]
+            });
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
