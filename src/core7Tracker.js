@@ -3,6 +3,7 @@ const cron = require('node-cron');
 const CoreIndicators = require('./utils/coreIndicators');
 const SignalStateManager = require('./utils/signalStateManager');
 const PerformanceEngine = require('./performance/performanceEngine');
+const CoinGeckoProvider = require('./utils/coinGeckoProvider');
 
 class Core7Tracker {
   constructor() {
@@ -10,6 +11,8 @@ class Core7Tracker {
     this.activeSignals = new Map();
     this.signalHistory = [];
     this.baseUrl = 'https://api.binance.com';
+    this.coinGeckoProvider = new CoinGeckoProvider();
+    this.useCoinGecko = false; // Fallback flag
     this.cooldownPeriod = 30 * 60 * 1000; // 30 minutes
     this.signalStateManager = new SignalStateManager();
     this.priceHistory = new Map(); // symbol -> [prices]
@@ -43,6 +46,13 @@ class Core7Tracker {
       try {
         return await fn();
       } catch (err) {
+        // Check for Binance 451 error (Unavailable For Legal Reasons)
+        if (err.response && err.response.status === 451) {
+          console.log('🚫 Binance API blocked (451) - switching to CoinGecko fallback');
+          this.useCoinGecko = true;
+          return null;
+        }
+        
         if (i === retries - 1) {
           console.error(`Error fetching ${operation} after ${retries} retries:`, err.message);
           return null;
@@ -54,6 +64,11 @@ class Core7Tracker {
   }
 
   async getKlines(symbol, interval = '1h', limit = 500) {
+    if (this.useCoinGecko) {
+      console.log(`🔄 Using CoinGecko for ${symbol} klines`);
+      return this.coinGeckoProvider.getKlines(symbol, interval, limit);
+    }
+
     return this.fetchWithRetry(async () => {
       const response = await axios.get(`${this.baseUrl}/api/v3/klines`, {
         params: {
@@ -74,6 +89,11 @@ class Core7Tracker {
   }
 
   async getCurrentPrice(symbol) {
+    if (this.useCoinGecko) {
+      console.log(`🔄 Using CoinGecko for ${symbol} price`);
+      return this.coinGeckoProvider.getCurrentPrice(symbol);
+    }
+
     return this.fetchWithRetry(async () => {
       const response = await axios.get(`${this.baseUrl}/api/v3/ticker/price`, {
         params: { symbol }
@@ -947,6 +967,7 @@ class Core7Tracker {
 
   start() {
     console.log('🎯 Core 7 Signals Tracker Started');
+    console.log(`📡 Data Source: ${this.useCoinGecko ? 'CoinGecko API (Fallback)' : 'Binance API (Primary)'}`);
     console.log('📊 Monitoring: BTCUSDT, SOLUSDT, DOGEUSDT, AVAXUSDT, LINKUSDT');
     console.log('⚡ Signals: Golden/Death Cross, RSI, MACD, Breakouts, Volume, Bollinger, Retest');
     console.log('⏰ Performance tracking: 1 hour');
