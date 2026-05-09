@@ -4,6 +4,10 @@ const { Server } = require('socket.io');
 const http = require('http');
 
 const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Trading Dashboard Running');
+});
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
