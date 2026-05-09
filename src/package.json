@@ -1,0 +1,41 @@
+{
+  "name": "trading-signal-alert-system",
+  "version": "1.0.0",
+  "description": "A rule-based trading alert app with crypto signals",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "dashboard": "BROWSER=none npm start",
+    "server": "node src/server.js",
+    "dev-dashboard": "concurrently \"npm run server\" \"npm run dashboard\"",
+    "build": "echo 'Backend build complete'"
+  },
+  "keywords": [
+    "trading",
+    "signals",
+    "alerts",
+    "crypto",
+    "binance"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.22.1",
+    "node-cron": "^3.0.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-scripts": "^5.0.1",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
+  }
+}
