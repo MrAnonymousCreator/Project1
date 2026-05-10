@@ -8,7 +8,7 @@ import {
   BarChart3, LineChart, Zap, Target, Eye, Sparkles
 } from 'lucide-react';
 
-const EnhancedTradingDashboard = () => {
+const TradingDashboard = () => {
   const [signals, setSignals] = useState([]);
   const [marketSentiment, setMarketSentiment] = useState('NEUTRAL');
   const [sentimentScore, setSentimentScore] = useState(0);
@@ -295,12 +295,10 @@ const EnhancedTradingDashboard = () => {
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full animate-pulse ${
-                        connectionStatus === 'CONNECTED' ? 'bg-emerald-500' : 
-                        connectionStatus === 'CONNECTING' ? 'bg-amber-500' : 'bg-red-500'
+                        connectionStatus === 'CONNECTED' ? 'bg-emerald-500' : 'bg-red-500'
                       }`} />
                       <span className={`text-xs font-medium ${
-                        connectionStatus === 'CONNECTED' ? 'text-emerald-400' : 
-                        connectionStatus === 'CONNECTING' ? 'text-amber-400' : 'text-red-400'
+                        connectionStatus === 'CONNECTED' ? 'text-emerald-400' : 'text-red-400'
                       }`}>
                         {connectionStatus}
                       </span>
@@ -600,4 +598,4 @@ const EnhancedTradingDashboard = () => {
   );
 };
 
-export default EnhancedTradingDashboard;
+export default TradingDashboard;
