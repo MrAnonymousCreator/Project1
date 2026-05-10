@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const CoreIndicators = require('./utils/coreIndicators');
 const SignalStateManager = require('./utils/signalStateManager');
 const PerformanceEngine = require('./performance/performanceEngine');
-const CoinGeckoProvider = require('./utils/coinGeckoProvider');
+const BinanceProvider = require('./utils/binanceProvider');
 
 class Core7Tracker {
   constructor() {
@@ -11,8 +11,8 @@ class Core7Tracker {
     this.activeSignals = new Map();
     this.signalHistory = [];
     this.baseUrl = 'https://api.binance.com';
-    this.coinGeckoProvider = new CoinGeckoProvider();
-    this.useCoinGecko = false; // Fallback flag
+    this.binanceProvider = new BinanceProvider();
+    this.useCoinGecko = false; // Always use Binance
     this.cooldownPeriod = 30 * 60 * 1000; // 30 minutes
     this.signalStateManager = new SignalStateManager();
     this.priceHistory = new Map(); // symbol -> [prices]
@@ -46,60 +46,26 @@ class Core7Tracker {
       try {
         return await fn();
       } catch (err) {
-        // Check for Binance 451 error (Unavailable For Legal Reasons)
-        if (err.response && err.response.status === 451) {
-          console.log('🚫 Binance API blocked (451) - switching to CoinGecko fallback');
-          this.useCoinGecko = true;
-          return null;
+        console.error(`Error fetching ${operation} after ${retries} retries:`, err.message);
+        if (err.response?.status === 429) {
+          console.log('Rate limit exceeded, waiting longer...');
+          await new Promise(resolve => setTimeout(resolve, 5000));
         }
-        
-        if (i === retries - 1) {
-          console.error(`Error fetching ${operation} after ${retries} retries:`, err.message);
-          return null;
-        }
-        console.log(`Retry ${i + 1}/${retries} for ${operation}...`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        return null;
       }
+      console.log(`Retry ${i + 1}/${retries} for ${operation}...`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
     }
   }
 
   async getKlines(symbol, interval = '1h', limit = 500) {
-    if (this.useCoinGecko) {
-      console.log(`🔄 Using CoinGecko for ${symbol} klines`);
-      return this.coinGeckoProvider.getKlines(symbol, interval, limit);
-    }
-
-    return this.fetchWithRetry(async () => {
-      const response = await axios.get(`${this.baseUrl}/api/v3/klines`, {
-        params: {
-          symbol,
-          interval,
-          limit
-        }
-      });
-      return response.data ? response.data.map(kline => ({
-        timestamp: parseInt(kline[0]),
-        open: parseFloat(kline[1]),
-        high: parseFloat(kline[2]),
-        low: parseFloat(kline[3]),
-        close: parseFloat(kline[4]),
-        volume: parseFloat(kline[5]),
-      })) : null;
-    }, 3, `klines for ${symbol}`);
+    // Use Binance provider directly
+    return this.binanceProvider.getKlines(symbol, interval, limit);
   }
 
   async getCurrentPrice(symbol) {
-    if (this.useCoinGecko) {
-      console.log(`🔄 Using CoinGecko for ${symbol} price`);
-      return this.coinGeckoProvider.getCurrentPrice(symbol);
-    }
-
-    return this.fetchWithRetry(async () => {
-      const response = await axios.get(`${this.baseUrl}/api/v3/ticker/price`, {
-        params: { symbol }
-      });
-      return response.data && response.data.price ? parseFloat(response.data.price) : null;
-    }, 3, `price for ${symbol}`);
+    // Use Binance provider directly
+    return this.binanceProvider.getCurrentPrice(symbol);
   }
 
   createSignalKey(symbol, signalType, details) {
