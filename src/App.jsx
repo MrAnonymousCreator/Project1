@@ -14,6 +14,9 @@ const TradingDashboard = () => {
   const [notifications, setNotifications] = React.useState([]);
   const [newSignalId, setNewSignalId] = React.useState(null);
   const [expandedSignal, setExpandedSignal] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [demoMode, setDemoMode] = React.useState(false);
+  const [connectionError, setConnectionError] = React.useState(null);
 
   // Helper function to get bias color
   const getBiasColor = (bias) => {
@@ -35,6 +38,47 @@ const TradingDashboard = () => {
     };
     
     return explanations[signal.type] || `${signal.coin} is showing ${signal.type.toLowerCase()} patterns that traders should monitor closely.`;
+  };
+
+  // Initialize with fallback data
+  const initializeFallbackData = () => {
+    const fallbackSignals = [
+      {
+        id: 'demo-1',
+        coin: 'BTC',
+        type: 'RSI Oversold',
+        message: '28.5 RSI suggests oversold conditions',
+        price: '$43,250.00',
+        change24h: '+2.4%',
+        confidence: 85,
+        bias: 'BULLISH',
+        strength: 'STRONG',
+        status: 'ACTIVE',
+        timestamp: new Date(Date.now() - 900000),
+        sparkline: Array.from({ length: 10 }, () => (Math.random() - 0.5) * 3)
+      },
+      {
+        id: 'demo-2',
+        coin: 'ETH',
+        type: 'MACD Bullish Crossover',
+        message: 'MACD shows positive momentum shift',
+        price: '$2,180.50',
+        change24h: '+1.8%',
+        confidence: 78,
+        bias: 'BULLISH',
+        strength: 'MODERATE',
+        status: 'ACTIVE',
+        timestamp: new Date(Date.now() - 600000),
+        sparkline: Array.from({ length: 10 }, () => (Math.random() - 0.5) * 2)
+      }
+    ];
+
+    setSignals(fallbackSignals);
+    setMarketSentiment('BULLISH');
+    setSentimentScore(15.2);
+    setActiveAlerts(2);
+    setDemoMode(true);
+    setLoading(false);
   };
 
   // Sound notification
@@ -89,34 +133,83 @@ const TradingDashboard = () => {
     }
   }, []);
 
+  // Safe socket connection with timeout and fallback
   React.useEffect(() => {
-    const socket = io();
-    
-    socket.on('connect', () => {
-      console.log('Connected to trading signals server');
-      setConnectionStatus('CONNECTED');
-    });
+    let socket = null;
+    let connectionTimeout = null;
 
-    socket.on('disconnect', () => {
-      console.log('Disconnected from trading signals server');
-      setConnectionStatus('DISCONNECTED');
-    });
+    const connectToServer = () => {
+      try {
+        socket = io();
+        
+        // Set connection timeout
+        connectionTimeout = setTimeout(() => {
+          console.log('⏰ Connection timeout, switching to demo mode');
+          setConnectionError('Connection timeout');
+          initializeFallbackData();
+        }, 8000); // 8 second timeout
 
-    socket.on('market-sentiment', (data) => {
-      setMarketSentiment(data.sentiment);
-      setSentimentScore(data.sentimentScore || 0);
-    });
+        socket.on('connect', () => {
+          console.log('✅ Connected to trading signals server');
+          setConnectionStatus('CONNECTED');
+          setLoading(false);
+          setDemoMode(false);
+          setConnectionError(null);
+          
+          if (connectionTimeout) {
+            clearTimeout(connectionTimeout);
+            connectionTimeout = null;
+          }
+        });
 
-    socket.on('signal', (data) => {
-      addLiveFeedItem(data.message || data.type, 'signal');
-      updateSignalsFromBackend(data);
-    });
+        socket.on('disconnect', () => {
+          console.log('🔌 Disconnected from trading signals server');
+          setConnectionStatus('DISCONNECTED');
+        });
 
-    socket.on('alert-count', (data) => {
-      setActiveAlerts(data.count);
-    });
+        socket.on('connect_error', (error) => {
+          console.error('❌ Connection error:', error);
+          setConnectionError('Connection failed');
+          initializeFallbackData();
+        });
 
-    return () => socket.disconnect();
+        socket.on('market-sentiment', (data) => {
+          setMarketSentiment(data.sentiment);
+          setSentimentScore(data.sentimentScore || 0);
+        });
+
+        socket.on('signal', (data) => {
+          addLiveFeedItem(data.message || data.type, 'signal');
+          updateSignalsFromBackend(data);
+        });
+
+        socket.on('alert-count', (data) => {
+          setActiveAlerts(data.count);
+        });
+
+        socket.on('initial-data', (data) => {
+          if (data.signals && data.signals.length > 0) {
+            setSignals(data.signals);
+          }
+        });
+
+      } catch (error) {
+        console.error('❌ Socket initialization error:', error);
+        setConnectionError('Socket initialization failed');
+        initializeFallbackData();
+      }
+    };
+
+    connectToServer();
+
+    return () => {
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+      }
+      if (socket) {
+        socket.disconnect();
+      }
+    };
   }, []);
 
   const addLiveFeedItem = (message, type) => {
@@ -226,11 +319,37 @@ const TradingDashboard = () => {
     setSentimentScore(25.5);
   }, []);
 
+  // Loading state fallback
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold mb-2">Core7</h2>
+          <p className="text-gray-400">Connecting to market feed...</p>
+          {connectionError && (
+            <p className="text-amber-400 text-sm mt-2">{connectionError}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      {/* Demo mode indicator */}
+      {demoMode && (
+        <div className="fixed top-4 left-4 z-50">
+          <div className="bg-amber-400/10 border border-amber-400/30 rounded-lg px-3 py-2 flex items-center gap-2">
+            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+            <span className="text-amber-400 text-sm font-medium">Demo Mode</span>
+          </div>
+        </div>
+      )}
+
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
-        {notifications.map((notification) => (
+        {notifications?.map((notification) => (
           <div
             key={notification.id}
             className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 shadow-xl animate-pulse max-w-sm border border-gray-800/30"
@@ -241,7 +360,7 @@ const TradingDashboard = () => {
                 <div className="font-bold text-white">{notification.coin} - {notification.type}</div>
                 <div className="text-sm text-gray-400">{notification.message}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {notification.timestamp.toLocaleTimeString()}
+                  {notification.timestamp?.toLocaleTimeString()}
                 </div>
               </div>
             </div>
@@ -281,11 +400,11 @@ const TradingDashboard = () => {
             </div>
             
             <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed">
-              {signals.length > 0 ? (
+              {signals?.length > 0 ? (
                 <>
                   {signals.slice(0, 3).map((signal, index) => (
-                    <span key={signal.id} className="block mb-2">
-                      {signal.coin} showing {signal.type.toLowerCase()} with {signal.confidence}% confidence
+                    <span key={signal?.id} className="block mb-2">
+                      {signal?.coin} showing {signal?.type?.toLowerCase()} with {signal?.confidence}% confidence
                       {index < signals.slice(0, 3).length - 1 && <span className="text-gray-500"> • </span>}
                     </span>
                   ))}
@@ -321,7 +440,7 @@ const TradingDashboard = () => {
             <p className="text-gray-400 text-sm">Click any signal for AI analysis</p>
           </div>
           
-          {signals.length === 0 ? (
+          {!signals || signals.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-lg text-gray-400 mb-4">
                 <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />

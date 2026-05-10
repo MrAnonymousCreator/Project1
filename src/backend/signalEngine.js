@@ -1,12 +1,12 @@
 // Signal Engine - Orchestrates all indicators and emits signals
+const CoinbaseClient = require('./coinbaseClient');
 const RSI = require('./rsi');
 const MACD = require('./macd');
 const VolumeSpike = require('./volume');
-const BinanceClient = require('./binanceClient');
 
 class SignalEngine {
   constructor() {
-    this.binanceClient = new BinanceClient();
+    this.coinbaseClient = new CoinbaseClient();
     this.rsi = new RSI(14);
     this.macd = new MACD();
     this.volumeSpike = new VolumeSpike(2.0, 20);
@@ -23,29 +23,29 @@ class SignalEngine {
 
   // Start the signal engine
   start() {
-    console.log('🚀 Starting Signal Engine...');
-    
-    // Connect to Binance WebSocket
-    this.binanceClient.connect();
+    console.log('🚀 Starting Signal Engine with Coinbase...');
     
     // Subscribe to market data
-    this.binanceClient.subscribe((marketData) => {
+    this.coinbaseClient.onMarketData((marketData) => {
       this.processMarketData(marketData);
     });
-
-    // Load historical data for indicators
-    this.loadHistoricalData();
+    
+    // Connect to Coinbase WebSocket
+    this.coinbaseClient.connect();
+    
+    // Start periodic analysis
+    this.startPeriodicAnalysis();
   }
 
   // Load historical data for technical indicators
   async loadHistoricalData() {
     console.log('📊 Loading historical data...');
     
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'DOGEUSDT', 'AVAXUSDT', 'LINKUSDT'];
+    const symbols = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'DOGE-USD', 'AVAX-USD', 'LINK-USD'];
     
     for (const symbol of symbols) {
       try {
-        const klines = await this.binanceClient.getKlines(symbol, '1h', 100);
+        const klines = await this.coinbaseClient.getKlines(symbol, '1h', 100);
         
         this.priceHistory[symbol] = klines.map(k => k.close);
         this.volumeHistory[symbol] = klines.map(k => k.volume);
@@ -65,6 +65,113 @@ class SignalEngine {
         console.error(`❌ Error loading data for ${symbol}:`, error);
       }
     }
+  }
+
+  // Start periodic analysis
+  startPeriodicAnalysis() {
+    console.log('⏰ Starting periodic analysis...');
+    
+    // Load historical data first
+    this.loadHistoricalData().then(() => {
+      // Run analysis every 30 seconds
+      this.analysisInterval = setInterval(() => {
+        this.runAnalysis();
+      }, 30000);
+      
+      // Run initial analysis
+      this.runAnalysis();
+    });
+  }
+
+  // Run analysis on all symbols
+  runAnalysis() {
+    const symbols = Object.keys(this.priceHistory);
+    
+    for (const symbol of symbols) {
+      this.analyzeSymbol(symbol);
+    }
+  }
+
+  // Analyze a single symbol
+  analyzeSymbol(symbol) {
+    const prices = this.priceHistory[symbol];
+    const volumes = this.volumeHistory[symbol];
+    
+    if (!prices || prices.length < 20) return; // Need enough data for analysis
+    
+    // RSI analysis
+    const rsiValue = this.rsi.calculate(prices);
+    const rsiSignal = this.rsi.getSignal(rsiValue);
+    
+    if (rsiSignal) {
+      const signal = {
+        symbol: symbol.replace('-USD', ''),
+        type: rsiSignal.type,
+        bias: rsiSignal.bias,
+        strength: rsiSignal.strength,
+        confidence: rsiSignal.confidence,
+        message: rsiSignal.message,
+        price: prices[prices.length - 1],
+        change: this.calculateChange(prices),
+        timestamp: Date.now()
+      };
+      
+      this.emitSignal(signal);
+    }
+    
+    // MACD analysis
+    if (this.macdHistory[symbol] && this.macdHistory[symbol].length >= 2) {
+      const currentMacd = this.macdHistory[symbol][this.macdHistory[symbol].length - 1];
+      const previousMacd = this.macdHistory[symbol][this.macdHistory[symbol].length - 2];
+      
+      const macdSignal = this.macd.getSignal(currentMacd, previousMacd);
+      
+      if (macdSignal) {
+        const signal = {
+          symbol: symbol.replace('-USD', ''),
+          type: macdSignal.type,
+          bias: macdSignal.bias,
+          strength: macdSignal.strength,
+          confidence: macdSignal.confidence,
+          message: macdSignal.message,
+          price: prices[prices.length - 1],
+          change: this.calculateChange(prices),
+          timestamp: Date.now()
+        };
+        
+        this.emitSignal(signal);
+      }
+    }
+    
+    // Volume analysis
+    if (volumes && volumes.length >= 20) {
+      const currentVolume = volumes[volumes.length - 1];
+      const volumeSignal = this.volumeSpike.getSignal(currentVolume, volumes);
+      
+      if (volumeSignal) {
+        const signal = {
+          symbol: symbol.replace('-USD', ''),
+          type: volumeSignal.type,
+          bias: volumeSignal.bias,
+          strength: volumeSignal.strength,
+          confidence: volumeSignal.confidence,
+          message: volumeSignal.message,
+          price: prices[prices.length - 1],
+          change: this.calculateChange(prices),
+          timestamp: Date.now()
+        };
+        
+        this.emitSignal(signal);
+      }
+    }
+  }
+
+  // Calculate price change percentage
+  calculateChange(prices) {
+    if (prices.length < 2) return 0;
+    const current = prices[prices.length - 1];
+    const previous = prices[prices.length - 2];
+    return ((current - previous) / previous) * 100;
   }
 
   // Process incoming market data
@@ -213,9 +320,12 @@ class SignalEngine {
   // Stop the signal engine
   stop() {
     console.log('🛑 Stopping Signal Engine...');
-    this.binanceClient.disconnect();
-    this.signalCallbacks = [];
-    this.activeSignals.clear();
+    
+    if (this.analysisInterval) {
+      clearInterval(this.analysisInterval);
+    }
+    
+    this.coinbaseClient.disconnect();
   }
 }
 
