@@ -2,8 +2,7 @@
 export default {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
-    "./public/index.html",
-    "./mini-dashboard.html"
+    "./public/index.html"
   ],
   theme: {
     extend: {
