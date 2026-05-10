@@ -36,7 +36,7 @@ app.get('/generic', (req, res) => {
 });
 
 // Serve built React app (production) - this must be the last route
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
