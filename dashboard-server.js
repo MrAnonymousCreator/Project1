@@ -20,24 +20,24 @@ app.use('/src', express.static(path.join(__dirname, 'src'), {
   }
 }));
 
-// Serve built React app (production)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// Serve mini dashboard on a separate route
+// Serve mini dashboard on a separate route (must be before catch-all)
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
 });
 
-// Working React app route
+// Working React app route (must be before catch-all)
 app.get('/react', (req, res) => {
   res.sendFile(path.join(__dirname, 'mini-react.html'));
 });
 
-// Generic dashboard route
+// Generic dashboard route (must be before catch-all)
 app.get('/generic', (req, res) => {
   res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
+});
+
+// Serve built React app (production) - this must be the last route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // Create server and Socket.IO
