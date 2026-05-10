@@ -8,6 +8,9 @@ const app = express();
 // Serve static files (the mini dashboard)
 app.use(express.static(__dirname));
 
+// Serve built React app assets
+app.use(express.static(path.join(__dirname, 'dist')));
+
 // Serve React app files with correct MIME types
 app.use('/src', express.static(path.join(__dirname, 'src'), {
   setHeaders: (res, filePath) => {
@@ -17,19 +20,14 @@ app.use('/src', express.static(path.join(__dirname, 'src'), {
   }
 }));
 
-// Serve mini dashboard as main route
+// Serve built React app (production)
 app.get('/', (req, res) => {
-  res.send('Trading Dashboard Running');
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // Serve mini dashboard on a separate route
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'mini-dashboard.html'));
-});
-
-// Development route for React app with Vite
-app.get('/dev', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Working React app route

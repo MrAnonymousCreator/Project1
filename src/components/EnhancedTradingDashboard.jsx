@@ -7,6 +7,9 @@ import {
   BarChart3, LineChart, Zap, Target, Eye, Sparkles
 } from 'lucide-react';
 
+// Import Socket.IO client dynamically
+const io = typeof window !== 'undefined' && window.io ? window.io : null;
+
 const EnhancedTradingDashboard = () => {
   const [signals, setSignals] = useState([]);
   const [marketSentiment, setMarketSentiment] = useState('NEUTRAL');
@@ -22,6 +25,13 @@ const EnhancedTradingDashboard = () => {
 
   // Socket.IO connection
   useEffect(() => {
+    if (!io) {
+      // Socket.IO not available, use mock data
+      setConnectionStatus('DEMO MODE');
+      setIsLoading(false);
+      return;
+    }
+
     const socket = io();
     
     socket.on('connect', () => {
@@ -164,6 +174,19 @@ const EnhancedTradingDashboard = () => {
       }
     ];
     setSignals(initialSignals);
+
+    // Add mock live feed data for demo mode
+    const mockLiveFeed = [
+      { message: 'BTC Golden Cross detected on 4H timeframe', type: 'signal', timestamp: new Date(Date.now() - 1200000) },
+      { message: 'SOL showing strong bullish divergence', type: 'signal', timestamp: new Date(Date.now() - 1800000) },
+      { message: 'Market sentiment shifted to BULLISH', type: 'milestone', timestamp: new Date(Date.now() - 2400000) },
+      { message: 'DOGE volume spike detected - 3x average volume', type: 'alert', timestamp: new Date(Date.now() - 3000000) },
+      { message: 'ETH resistance breakout confirmed', type: 'signal', timestamp: new Date(Date.now() - 3600000) }
+    ];
+    setLiveFeed(mockLiveFeed);
+    setActiveAlerts(3);
+    setMarketSentiment('BULLISH');
+    setSentimentScore(25.5);
   }, []);
 
   const getStatusColor = (status) => {
