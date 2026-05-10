@@ -330,184 +330,260 @@ const EnhancedTradingDashboard = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
-        {/* Market Overview Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-          {/* Market Sentiment */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-400">Market Sentiment</h3>
-              <Activity className="w-4 h-4 text-emerald-400" />
+        {/* Hero Section with Market Overview */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Market Overview</h2>
+              <p className="text-gray-400">Real-time crypto trading signals and analysis</p>
             </div>
-            <div className={`text-2xl font-bold ${getSentimentColor(marketSentiment)}`}>
-              {marketSentiment.replace('_', ' ')}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Score: {sentimentScore >= 0 ? '+' : ''}{sentimentScore.toFixed(1)}%
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${
+                connectionStatus === 'CONNECTED' ? 'bg-emerald-500' : 'bg-red-500'
+              }`} />
+              <span>{connectionStatus}</span>
             </div>
           </div>
 
-          {/* Active Signals */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-400">Active Signals</h3>
-              <Zap className="w-4 h-4 text-blue-400" />
+          {/* Market Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Market Sentiment Card */}
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-gray-800 rounded-xl p-6 backdrop-blur-sm hover:border-gray-700 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-400">Market Sentiment</span>
+                </div>
+              </div>
+              <div className={`text-3xl font-bold ${getSentimentColor(marketSentiment)} mb-2`}>
+                {marketSentiment.replace('_', ' ')}
+              </div>
+              <div className="text-xs text-gray-500">
+                Score: {sentimentScore >= 0 ? '+' : ''}{sentimentScore.toFixed(1)}%
+              </div>
+              <div className="mt-4 h-1 bg-gray-700 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-1000 ${getSentimentColor(marketSentiment)}`} 
+                     style={{ width: `${Math.max(0, Math.min(100, sentimentScore + 50))}%` }} />
+              </div>
             </div>
-            <div className="text-2xl font-bold text-white">{signals.length}</div>
-            <div className="text-xs text-gray-500 mt-1">Live trading</div>
-          </div>
 
-          {/* Win Rate */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-400">Win Rate</h3>
-              <Target className="w-4 h-4 text-emerald-400" />
+            {/* Active Signals Card */}
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-gray-800 rounded-xl p-6 backdrop-blur-sm hover:border-gray-700 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-400">Active Signals</span>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-white mb-2">{signals.length}</div>
+              <div className="text-xs text-gray-500">
+                {signals.filter(s => s.status === 'ACTIVE').length} active • {signals.filter(s => s.confidence >= 80).length} high confidence
+              </div>
+              <div className="mt-4 flex gap-1">
+                {signals.slice(0, 4).map((signal, index) => (
+                  <div key={index} className={`w-2 h-2 rounded-full ${
+                    signal.confidence >= 80 ? 'bg-emerald-400' : 
+                    signal.confidence >= 60 ? 'bg-amber-400' : 'bg-gray-400'
+                  }`} />
+                ))}
+              </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-400">87.3%</div>
-            <div className="text-xs text-emerald-400 mt-1">+2.4% today</div>
-          </div>
 
-          {/* Active Alerts */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-400">Alerts</h3>
-              <Bell className="w-4 h-4 text-amber-400" />
+            {/* Win Rate Card */}
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-gray-800 rounded-xl p-6 backdrop-blur-sm hover:border-gray-700 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                    <Target className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-400">Win Rate</span>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-emerald-400 mb-2">87.3%</div>
+              <div className="text-xs text-emerald-400">
+                +2.4% today • 156/179 signals
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <TrendingUp className="w-3 h-3 text-emerald-400" />
+                <span className="text-xs text-emerald-400">Above average</span>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-amber-400">{activeAlerts}</div>
-            <div className="text-xs text-gray-500 mt-1">Need attention</div>
+
+            {/* Portfolio Value Card */}
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-gray-800 rounded-xl p-6 backdrop-blur-sm hover:border-gray-700 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                    <DollarSign className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-400">24h Volume</span>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-white mb-2">$2.4M</div>
+              <div className="text-xs text-emerald-400">
+                +12.8% from yesterday
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="text-xs text-emerald-400">High activity</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Active Signals Table */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl backdrop-blur-sm">
-          <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-3">
-              <Zap className="w-5 h-5 text-emerald-400" />
-              Active Signals
-            </h2>
-            <div className="text-xs text-gray-500">
-              {filteredSignals.length} signals • Updated {lastUpdated.toLocaleTimeString()}
+        {/* Active Signals Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Trading Signals</h2>
+              <p className="text-gray-400">AI-powered cryptocurrency trading opportunities</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-500">
+                {filteredSignals.length} active signals
+              </div>
+              <button className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors text-sm font-medium">
+                View All Signals
+              </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-400 uppercase">Coin</th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-400 uppercase">Signal</th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-400 uppercase">Price</th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-400 uppercase">24h Change</th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-400 uppercase">Confidence</th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-400 uppercase">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSignals.map((signal) => (
-                  <tr 
-                    key={signal.id}
-                    onClick={() => handleSignalClick(signal)}
-                    className="border-b border-gray-800/50 hover:bg-gray-800/30 cursor-pointer transition-colors"
-                  >
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                          signal.coin === 'BTC' ? 'bg-orange-500/20 text-orange-400' :
-                          signal.coin === 'ETH' ? 'bg-blue-500/20 text-blue-400' :
-                          signal.coin === 'SOL' ? 'bg-purple-500/20 text-purple-400' :
-                          signal.coin === 'DOGE' ? 'bg-amber-500/20 text-amber-400' :
-                          'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {getCoinIcon(signal.coin)}
-                        </div>
-                        <span className="text-white font-medium">{signal.coin}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div>
-                        <div className="text-white font-medium">{signal.type}</div>
-                        <div className="text-xs text-gray-400 mt-1">{signal.message}</div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-white font-medium">{signal.price}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className={`inline-flex items-center gap-1 text-sm font-medium ${
-                        signal.change24h.startsWith('+') ? 'text-emerald-400' : 'text-red-400'
-                      }`}>
-                        {signal.change24h.startsWith('+') ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                        <span>{signal.change24h}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <div className="text-white font-medium">{signal.confidence}%</div>
-                        <div className="w-16 bg-gray-700 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full ${getConfidenceColor(signal.confidence)}`}
-                            style={{ width: `${signal.confidence}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(signal.status)}`}>
-                        {signal.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Signal Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredSignals.map((signal) => (
+              <div
+                key={signal.id}
+                onClick={() => handleSignalClick(signal)}
+                className={`bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-gray-800 rounded-xl p-6 backdrop-blur-sm hover:border-gray-700 transition-all cursor-pointer ${
+                  selectedSignal?.id === signal.id ? 'ring-2 ring-emerald-500/50' : ''
+                }`}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold ${
+                      signal.coin === 'BTC' ? 'bg-orange-500/20 text-orange-400' :
+                      signal.coin === 'ETH' ? 'bg-blue-500/20 text-blue-400' :
+                      signal.coin === 'SOL' ? 'bg-purple-500/20 text-purple-400' :
+                      signal.coin === 'DOGE' ? 'bg-amber-500/20 text-amber-400' :
+                      'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {getCoinIcon(signal.coin)}
+                    </div>
+                    <div>
+                      <div className="text-white font-bold">{signal.coin}</div>
+                      <div className="text-xs text-gray-400">{signal.type}</div>
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(signal.status)}`}>
+                    {signal.status}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-white">{signal.price}</div>
+                    <div className={`inline-flex items-center gap-1 text-sm font-medium ${
+                      signal.change24h.startsWith('+') ? 'text-emerald-400' : 'text-red-400'
+                    }`}>
+                      {signal.change24h.startsWith('+') ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      <span>{signal.change24h}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-400">Confidence</span>
+                      <div className="text-white font-bold">{signal.confidence}%</div>
+                    </div>
+                    <div className="w-20 bg-gray-700 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${getConfidenceColor(signal.confidence)}`}
+                        style={{ width: `${signal.confidence}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-800/50 rounded-lg p-3">
+                    <p className="text-xs text-gray-300 leading-relaxed">{signal.message}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{signal.timestamp.toLocaleTimeString()}</span>
+                    <button className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                      View Details →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Live Activity Feed */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl backdrop-blur-sm mt-8">
+        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-gray-800 rounded-xl backdrop-blur-sm">
           <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-3">
-              <Activity className="w-5 h-5 text-emerald-400" />
-              Live Activity
-            </h2>
+            <div>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-3">
+                <Activity className="w-5 h-5 text-emerald-400" />
+                Live Activity
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">Real-time trading signals and events</p>
+            </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span>Real-time</span>
+              <span>Live</span>
             </div>
           </div>
 
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto">
             {liveFeed.length === 0 ? (
               <div className="text-center py-12">
                 <div className="inline-flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-lg text-gray-400">
-                  <AlertTriangle className="w-5 h-5" />
-                  <span className="text-sm">Waiting for signals...</span>
+                  <Activity className="w-5 h-5" />
+                  <span className="text-sm">Monitoring for signals...</span>
                 </div>
               </div>
             ) : (
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-3">
                 {liveFeed.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-3 p-3 bg-gray-800/30 rounded-lg"
+                    className="flex items-start gap-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50 hover:bg-gray-800/50 transition-colors"
                   >
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                       item.type === 'signal' ? 'bg-emerald-500' :
                       item.type === 'alert' ? 'bg-red-500' :
                       item.type === 'milestone' ? 'bg-amber-500' :
                       'bg-gray-500'
                     }`} />
-                    <div className="flex-1">
-                      <p className={`text-sm ${
-                        item.type === 'signal' ? 'text-emerald-400' :
-                        item.type === 'alert' ? 'text-red-400' :
-                        item.type === 'milestone' ? 'text-amber-400' :
-                        'text-gray-400'
-                      }`}>
-                        {item.message}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {item.timestamp.toLocaleTimeString()}
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <p className={`text-sm leading-relaxed ${
+                            item.type === 'signal' ? 'text-emerald-400' :
+                            item.type === 'alert' ? 'text-red-400' :
+                            item.type === 'milestone' ? 'text-amber-400' :
+                            'text-gray-400'
+                          }`}>
+                            {item.message}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {item.timestamp.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className={`px-2 py-1 rounded text-xs font-medium ${
+                          item.type === 'signal' ? 'bg-emerald-500/20 text-emerald-400' :
+                          item.type === 'alert' ? 'bg-red-500/20 text-red-400' :
+                          item.type === 'milestone' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {item.type}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
