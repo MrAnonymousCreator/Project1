@@ -45,7 +45,7 @@ class RSI {
         bias: 'BULLISH',
         strength: 'STRONG',
         confidence: Math.round((30 - rsi) * 3 + 70), // 70-100% confidence
-        message: `RSI Oversold at ${rsi.toFixed(1)} - Potential reversal opportunity`
+        message: `${rsi.toFixed(1)} RSI suggests oversold conditions`
       };
     }
 
@@ -55,7 +55,7 @@ class RSI {
         bias: 'BEARISH',
         strength: 'STRONG',
         confidence: Math.round((rsi - 70) * 3 + 70), // 70-100% confidence
-        message: `RSI Overbought at ${rsi.toFixed(1)} - Potential pullback ahead`
+        message: `${rsi.toFixed(1)} RSI indicates overbought territory`
       };
     }
 

@@ -60,7 +60,7 @@ class MACD {
         bias: 'BULLISH',
         strength,
         confidence: Math.round(confidence),
-        message: `MACD Bullish Crossover - Momentum turning positive`
+        message: `MACD shows positive momentum shift`
       };
     }
 
@@ -74,7 +74,7 @@ class MACD {
         bias: 'BEARISH',
         strength,
         confidence: Math.round(confidence),
-        message: `MACD Bearish Crossover - Momentum turning negative`
+        message: `MACD indicates negative momentum shift`
       };
     }
 

@@ -28,7 +28,7 @@ class VolumeSpike {
         bias: 'NEUTRAL', // Volume spike is neutral, indicates unusual activity
         strength,
         confidence: Math.round(confidence),
-        message: `Volume Spike detected - ${volumeRatio.toFixed(1)}x average volume`,
+        message: `Unusual volume activity detected (${volumeRatio.toFixed(1)}x normal)`,
         volumeRatio: volumeRatio.toFixed(1)
       };
     }

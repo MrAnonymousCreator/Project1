@@ -1,5 +1,6 @@
 import React from 'react';
 import io from 'socket.io-client';
+import Sparkline from './Sparkline.jsx';
 import './index.css';
 
 const TradingDashboard = () => {
@@ -11,6 +12,30 @@ const TradingDashboard = () => {
   const [connectionStatus, setConnectionStatus] = React.useState('CONNECTING...');
   const [lastUpdated, setLastUpdated] = React.useState(new Date());
   const [notifications, setNotifications] = React.useState([]);
+  const [newSignalId, setNewSignalId] = React.useState(null);
+  const [expandedSignal, setExpandedSignal] = React.useState(null);
+
+  // Helper function to get bias color
+  const getBiasColor = (bias) => {
+    switch(bias) {
+      case 'BULLISH': return 'bg-emerald-400';
+      case 'BEARISH': return 'bg-red-400';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  // Generate AI explanation for signal
+  const generateAIExplanation = (signal) => {
+    const explanations = {
+      'RSI Oversold': `${signal.coin} appears oversold after recent selling pressure. This could indicate a potential reversal opportunity as the asset may be undervalued.`,
+      'RSI Overbought': `${signal.coin} seems overbought after recent buying activity. This suggests the asset may be overvalued and could see a pullback soon.`,
+      'MACD Bullish Crossover': `${signal.coin} shows positive momentum as the MACD line crossed above the signal line. This typically indicates upward price movement.`,
+      'MACD Bearish Crossover': `${signal.coin} is showing negative momentum with the MACD line crossing below the signal line. This often precedes downward price movement.`,
+      'Volume Spike': `${signal.coin} is experiencing unusual trading volume, which could signal significant market movement or institutional activity.`
+    };
+    
+    return explanations[signal.type] || `${signal.coin} is showing ${signal.type.toLowerCase()} patterns that traders should monitor closely.`;
+  };
 
   // Sound notification
   const playNotificationSound = () => {
@@ -124,6 +149,12 @@ const TradingDashboard = () => {
       return [newSignal, ...existing.slice(0, 11)];
     });
     
+    // Set new signal ID for animation
+    setNewSignalId(newSignal.id);
+    
+    // Clear animation ID after animation completes
+    setTimeout(() => setNewSignalId(null), 1000);
+    
     // Show notification for new signal
     showNotification(newSignal);
   };
@@ -196,19 +227,16 @@ const TradingDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gray-950 text-white">
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {notifications.map((notification) => (
           <div
             key={notification.id}
-            className="bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-xl animate-pulse max-w-sm"
+            className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 shadow-xl animate-pulse max-w-sm border border-gray-800/30"
           >
             <div className="flex items-start gap-3">
-              <div className={`w-2 h-2 rounded-full mt-2 ${
-                notification.bias === 'BULLISH' ? 'bg-emerald-400' : 
-                notification.bias === 'BEARISH' ? 'bg-red-400' : 'bg-gray-400'
-              }`} />
+              <div className={`w-2 h-2 rounded-full mt-2 ${getBiasColor(notification.bias)}`} />
               <div className="flex-1">
                 <div className="font-bold text-white">{notification.coin} - {notification.type}</div>
                 <div className="text-sm text-gray-400">{notification.message}</div>
@@ -221,15 +249,15 @@ const TradingDashboard = () => {
         ))}
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
-        <header className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <header className="mb-8">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-emerald-400 mb-2">Core7Tracker</h1>
-              <p className="text-gray-400 text-sm sm:text-base">AI Trading Signals Dashboard</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-emerald-400 mb-2">Core7</h1>
+              <p className="text-gray-400">AI Trading Intelligence</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className={`w-2 h-2 rounded-full ${
                 connectionStatus === 'CONNECTED' ? 'bg-emerald-500' : 'bg-red-500'
               } animate-pulse`} />
@@ -238,65 +266,80 @@ const TradingDashboard = () => {
           </div>
         </header>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">Market Sentiment</h3>
-            <div className={`text-xl sm:text-2xl font-bold ${
-              marketSentiment === 'BULLISH' ? 'text-emerald-400' : 
-              marketSentiment === 'BEARISH' ? 'text-red-400' : 'text-gray-400'
-            }`}>
-              {marketSentiment}
+        {/* AI Summary Hero */}
+        <div className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-gray-800/20">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-400/10 rounded-full mb-4">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="text-emerald-400 font-medium">Live Analysis</span>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Score: {sentimentScore >= 0 ? '+' : ''}{sentimentScore.toFixed(1)}
+            
+            <div className="text-3xl sm:text-4xl font-bold text-white mb-2">
+              {marketSentiment === 'BULLISH' ? 'Bullish momentum detected' :
+               marketSentiment === 'BEARISH' ? 'Bearish pressure building' :
+               'Market consolidating'}
             </div>
-          </div>
-          
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">Active Signals</h3>
-            <div className="text-xl sm:text-2xl font-bold text-white">{signals.length}</div>
-            <div className="text-xs text-gray-500 mt-1">Live trading</div>
-          </div>
-          
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">Alerts</h3>
-            <div className="text-xl sm:text-2xl font-bold text-amber-400">{activeAlerts}</div>
-            <div className="text-xs text-gray-500 mt-1">Need attention</div>
-          </div>
-          
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h3 className="text-sm font-medium text-gray-400 mb-2">Last Update</h3>
-            <div className="text-lg sm:text-xl font-bold text-white">
-              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">Real-time</div>
-          </div>
-        </div>
-
-        {/* Trading Signals */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl">
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-800">
-            <h2 className="text-lg font-semibold text-white">Trading Signals</h2>
-          </div>
-          
-          <div className="p-4 sm:p-6">
-            {signals.length === 0 ? (
-              <div className="text-center py-8 sm:py-12">
-                <div className="inline-flex items-center gap-3 px-4 py-3 bg-gray-800 rounded-lg text-gray-400 mb-4">
-                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                  <span className="text-sm">Waiting for signals...</span>
-                </div>
-                <p className="text-xs text-gray-500">Connect to Binance for real-time data</p>
+            
+            <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed">
+              {signals.length > 0 ? (
+                <>
+                  {signals.slice(0, 3).map((signal, index) => (
+                    <span key={signal.id} className="block mb-2">
+                      {signal.coin} showing {signal.type.toLowerCase()} with {signal.confidence}% confidence
+                      {index < signals.slice(0, 3).length - 1 && <span className="text-gray-500"> • </span>}
+                    </span>
+                  ))}
+                  {signals.length > 3 && (
+                    <span className="text-gray-500"> +{signals.length - 3} more signals</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400">Monitoring market conditions...</span>
+              )}
+            </p>
+            
+            <div className="flex items-center justify-center gap-6 mt-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-400">{signals.length}</div>
+                <div className="text-sm text-gray-400">Active signals</div>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {signals.map((signal, index) => (
-                  <div
-                    key={signal.id || index}
-                    className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-all"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-amber-400">{activeAlerts}</div>
+                <div className="text-sm text-gray-400">Alerts</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{sentimentScore >= 0 ? '+' : ''}{sentimentScore.toFixed(0)}</div>
+                <div className="text-sm text-gray-400">Sentiment score</div>
+              </div>
+            </div>
+          </div>
+
+        {/* Signal Feed */}
+        <div className="space-y-4">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-white mb-2">Live Signal Feed</h2>
+            <p className="text-gray-400 text-sm">Click any signal for AI analysis</p>
+          </div>
+          
+          {signals.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-lg text-gray-400 mb-4">
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                <span className="text-sm">Monitoring market conditions...</span>
+              </div>
+              <p className="text-xs text-gray-500">AI analysis ready when signals appear</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {signals.map((signal, index) => (
+                <div
+                  key={signal.id || index}
+                  className={`bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 border border-gray-800/20 cursor-pointer transition-all hover:bg-gray-900/50 ${
+                    signal.id === newSignalId ? 'ring-2 ring-emerald-400/30' : ''
+                  } ${expandedSignal === signal.id ? 'bg-gray-900/60' : ''}`}
+                  onClick={() => setExpandedSignal(expandedSignal === signal.id ? null : signal.id)}
+                >
+                    <div className="flex items-center justify-between">
                       {/* Left side - Coin and Signal */}
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold ${
@@ -315,34 +358,61 @@ const TradingDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Center - Price and Change */}
-                      <div className="text-center sm:text-left">
-                        <div className="text-white font-bold text-lg">{signal.price}</div>
-                        <div className={`text-sm font-medium ${
-                          signal.change24h.startsWith('+') ? 'text-emerald-400' : 'text-red-400'
-                        }`}>
-                          {signal.change24h}
-                        </div>
-                      </div>
-
                       {/* Right side - Badge and Confidence */}
-                      <div className="flex flex-col sm:items-end gap-2">
+                      <div className="flex items-center gap-3">
                         <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getBiasColor(signal.bias)}`}>
                           {signal.bias}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400">Confidence</span>
-                          <span className="text-sm font-bold text-white">{signal.confidence}%</span>
+                        <div className="text-right">
+                          <div className="text-white font-bold">{signal.confidence}%</div>
+                          <div className="text-xs text-gray-400">confidence</div>
                         </div>
-                        {signal.strength && (
-                          <div className={`text-xs font-medium ${getStrengthColor(signal.strength)}`}>
-                            {signal.strength}
-                          </div>
-                        )}
+                        <div className={`w-2 h-2 rounded-full transition-transform ${
+                          expandedSignal === signal.id ? 'rotate-90' : ''
+                        }`} />
                       </div>
                     </div>
 
-                    {/* Message */}
+                    {/* Expanded AI Analysis */}
+                    {expandedSignal === signal.id && (
+                      <div className="mt-4 pt-4 border-t border-gray-800/30">
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="text-sm font-semibold text-emerald-400 mb-2">AI Analysis</h4>
+                            <p className="text-gray-300 text-sm leading-relaxed">
+                              {generateAIExplanation(signal)}
+                            </p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-400">Current Price:</span>
+                              <span className="text-white ml-2">{signal.price}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">24h Change:</span>
+                              <span className={`ml-2 ${signal.change24h.startsWith('+') ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {signal.change24h}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {signal.sparkline && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-emerald-400 mb-2">Price Movement</h4>
+                              <div className="flex justify-center">
+                                <Sparkline 
+                                  data={signal.sparkline}
+                                  color={signal.bias === 'BULLISH' ? '#10b981' : '#ef4444'}
+                                  width={200}
+                                  height={40}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="mt-3 pt-3 border-t border-gray-700">
                       <p className="text-sm text-gray-300">{signal.message}</p>
                     </div>

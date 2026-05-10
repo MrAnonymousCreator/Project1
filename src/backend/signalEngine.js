@@ -170,6 +170,9 @@ class SignalEngine {
     const key = `${signal.symbol}_${signal.type.split(' ')[0]}`;
     this.lastSignals.set(key, { type: signal.type, timestamp: Date.now() });
     
+    // Add sparkline data to signal
+    signal.sparkline = this.generateSparklineData(signal.symbol);
+    
     // Update active signals
     this.activeSignals.set(signal.symbol, signal);
     
@@ -181,6 +184,20 @@ class SignalEngine {
         console.error('❌ Error in signal callback:', error);
       }
     });
+  }
+
+  // Generate sparkline data for visual movement
+  generateSparklineData(symbol) {
+    const history = this.priceHistory[symbol];
+    if (!history || history.length < 10) {
+      return Array.from({ length: 10 }, () => (Math.random() - 0.5) * 2);
+    }
+    
+    // Get last 10 points and normalize to percentage changes
+    const recent = history.slice(-10);
+    const basePrice = recent[0];
+    
+    return recent.map(price => ((price - basePrice) / basePrice) * 100);
   }
 
   // Subscribe to signal updates
