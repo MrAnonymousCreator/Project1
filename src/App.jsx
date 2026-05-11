@@ -21,9 +21,9 @@ const TradingDashboard = () => {
   // Helper function to get bias color
   const getBiasColor = (bias) => {
     switch(bias) {
-      case 'BULLISH': return 'bg-emerald-400';
-      case 'BEARISH': return 'bg-red-400';
-      default: return 'bg-gray-400';
+      case 'BULLISH': return 'bg-emerald-500 text-white';
+      case 'BEARISH': return 'bg-red-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
@@ -322,13 +322,13 @@ const TradingDashboard = () => {
   // Loading state fallback
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Core7</h2>
-          <p className="text-gray-400">Connecting to market feed...</p>
+          <div className="w-20 h-20 border-4 border-gray-300 border-t-gray-400 rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-2xl font-semibold mb-3 text-gray-900">Core7</h2>
+          <p className="text-gray-600 text-lg">Connecting to market feed...</p>
           {connectionError && (
-            <p className="text-amber-400 text-sm mt-2">{connectionError}</p>
+            <p className="text-amber-600 text-sm mt-3">{connectionError}</p>
           )}
         </div>
       </div>
@@ -336,13 +336,13 @@ const TradingDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* Demo mode indicator */}
       {demoMode && (
         <div className="fixed top-4 left-4 z-50">
-          <div className="bg-amber-400/10 border border-amber-400/30 rounded-lg px-3 py-2 flex items-center gap-2">
-            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-            <span className="text-amber-400 text-sm font-medium">Demo Mode</span>
+          <div className="bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="w-3 h-3 bg-amber-400 rounded-full animate-pulse"></div>
+            <span className="text-amber-700 text-sm font-medium">Demo Mode</span>
           </div>
         </div>
       )}
@@ -386,20 +386,20 @@ const TradingDashboard = () => {
         </header>
 
         {/* AI Summary Hero */}
-        <div className="bg-gray-900/30 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-gray-800/20">
+        <div className="bg-gray-50 rounded-2xl p-8 mb-8 border border-gray-200">
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-400/10 rounded-full mb-4">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
               <span className="text-emerald-400 font-medium">Live Analysis</span>
             </div>
             
-            <div className="text-3xl sm:text-4xl font-bold text-white mb-2">
+            <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
               {marketSentiment === 'BULLISH' ? 'Bullish momentum detected' :
                marketSentiment === 'BEARISH' ? 'Bearish pressure building' :
                'Market consolidating'}
             </div>
             
-            <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed">
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
               {signals?.length > 0 ? (
                 <>
                   {signals.slice(0, 3).map((signal, index) => (
@@ -434,59 +434,59 @@ const TradingDashboard = () => {
           </div>
 
         {/* Signal Feed */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-white mb-2">Live Signal Feed</h2>
-            <p className="text-gray-400 text-sm">Click any signal for AI analysis</p>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Live Signal Feed</h2>
+            <p className="text-gray-500 text-sm">Click any signal for AI analysis</p>
           </div>
           
           {!signals || signals.length === 0 ? (
             <div className="text-center py-12">
-              <div className="inline-flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-lg text-gray-400 mb-4">
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                <span className="text-sm">Monitoring market conditions...</span>
+              <div className="inline-flex items-center gap-3 px-6 py-4 bg-gray-100 rounded-xl text-gray-500 mb-4">
+                <div className="w-3 h-3 bg-gray-300 rounded-full animate-pulse" />
+                <span className="text-sm font-medium">Monitoring market conditions...</span>
               </div>
-              <p className="text-xs text-gray-500">AI analysis ready when signals appear</p>
+              <p className="text-sm text-gray-400">AI analysis ready when signals appear</p>
             </div>
           ) : (
             <div className="space-y-3">
               {signals.map((signal, index) => (
                 <div
                   key={signal.id || index}
-                  className={`bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 border border-gray-800/20 cursor-pointer transition-all hover:bg-gray-900/50 ${
-                    signal.id === newSignalId ? 'ring-2 ring-emerald-400/30' : ''
-                  } ${expandedSignal === signal.id ? 'bg-gray-900/60' : ''}`}
+                  className={`bg-white border border-gray-200 rounded-xl p-5 cursor-pointer transition-all hover:shadow-md hover:border-gray-300 ${
+                    signal.id === newSignalId ? 'ring-2 ring-emerald-400/20' : ''
+                  } ${expandedSignal === signal.id ? 'bg-gray-50' : ''}`}
                   onClick={() => setExpandedSignal(expandedSignal === signal.id ? null : signal.id)}
                 >
                     <div className="flex items-center justify-between">
                       {/* Left side - Coin and Signal */}
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold ${
-                          signal.coin === 'BTC' ? 'bg-orange-500/20 text-orange-400' :
-                          signal.coin === 'ETH' ? 'bg-blue-500/20 text-blue-400' :
-                          signal.coin === 'SOL' ? 'bg-purple-500/20 text-purple-400' :
-                          signal.coin === 'DOGE' ? 'bg-amber-500/20 text-amber-400' :
-                          signal.coin === 'AVAX' ? 'bg-red-500/20 text-red-400' :
-                          'bg-gray-500/20 text-gray-400'
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-base font-semibold ${
+                          signal.coin === 'BTC' ? 'bg-orange-100 text-orange-600' :
+                          signal.coin === 'ETH' ? 'bg-blue-100 text-blue-600' :
+                          signal.coin === 'SOL' ? 'bg-purple-100 text-purple-600' :
+                          signal.coin === 'DOGE' ? 'bg-amber-100 text-amber-600' :
+                          signal.coin === 'AVAX' ? 'bg-red-100 text-red-600' :
+                          'bg-gray-100 text-gray-600'
                         }`}>
-                          {signal.coin.charAt(0)}
+                          {signal.coin}
                         </div>
                         <div>
-                          <div className="text-white font-bold text-lg">{signal.coin}</div>
-                          <div className="text-sm text-gray-400">{signal.type}</div>
+                          <div className="font-semibold text-gray-900 text-lg">{signal.coin}</div>
+                          <div className="text-sm text-gray-500">{signal.type}</div>
                         </div>
                       </div>
 
                       {/* Right side - Badge and Confidence */}
-                      <div className="flex items-center gap-3">
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getBiasColor(signal.bias)}`}>
+                      <div className="flex items-center gap-4">
+                        <div className={`px-4 py-2 rounded-full text-sm font-medium ${getBiasColor(signal.bias)}`}>
                           {signal.bias}
                         </div>
                         <div className="text-right">
-                          <div className="text-white font-bold">{signal.confidence}%</div>
-                          <div className="text-xs text-gray-400">confidence</div>
+                          <div className="font-bold text-gray-900 text-lg">{signal.confidence}%</div>
+                          <div className="text-xs text-gray-500">confidence</div>
                         </div>
-                        <div className={`w-2 h-2 rounded-full transition-transform ${
+                        <div className={`w-2 h-2 rounded-full transition-transform text-gray-400 ${
                           expandedSignal === signal.id ? 'rotate-90' : ''
                         }`} />
                       </div>
@@ -494,23 +494,26 @@ const TradingDashboard = () => {
 
                     {/* Expanded AI Analysis */}
                     {expandedSignal === signal.id && (
-                      <div className="mt-4 pt-4 border-t border-gray-800/30">
-                        <div className="space-y-4">
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <div className="space-y-6">
                           <div>
-                            <h4 className="text-sm font-semibold text-emerald-400 mb-2">AI Analysis</h4>
-                            <p className="text-gray-300 text-sm leading-relaxed">
+                            <h4 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                              AI Analysis
+                            </h4>
+                            <p className="text-gray-700 leading-relaxed">
                               {generateAIExplanation(signal)}
                             </p>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 gap-6 text-sm">
                             <div>
-                              <span className="text-gray-400">Current Price:</span>
-                              <span className="text-white ml-2">{signal.price}</span>
+                              <span className="text-gray-500">Current Price:</span>
+                              <span className="font-medium text-gray-900 ml-2">{signal.price}</span>
                             </div>
                             <div>
-                              <span className="text-gray-400">24h Change:</span>
-                              <span className={`ml-2 ${signal.change24h.startsWith('+') ? 'text-emerald-400' : 'text-red-400'}`}>
+                              <span className="text-gray-500">24h Change:</span>
+                              <span className={`font-medium ml-2 ${signal.change24h.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
                                 {signal.change24h}
                               </span>
                             </div>
@@ -518,13 +521,16 @@ const TradingDashboard = () => {
                           
                           {signal.sparkline && (
                             <div>
-                              <h4 className="text-sm font-semibold text-emerald-400 mb-2">Price Movement</h4>
-                              <div className="flex justify-center">
+                              <h4 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                Price Movement
+                              </h4>
+                              <div className="bg-gray-50 rounded-lg p-4">
                                 <Sparkline 
                                   data={signal.sparkline}
                                   color={signal.bias === 'BULLISH' ? '#10b981' : '#ef4444'}
-                                  width={200}
-                                  height={40}
+                                  width={240}
+                                  height={50}
                                 />
                               </div>
                             </div>
