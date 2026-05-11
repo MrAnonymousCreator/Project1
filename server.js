@@ -18,7 +18,33 @@ app.use('/socket.io', express.static(path.join(__dirname, 'node_modules', 'socke
 
 // API routes
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/market-data/:symbol', (req, res) => {
+  const { symbol } = req.params;
+  
+  // Get current price from Coinbase
+  fetch(`https://api.coinbase.com/v2/prices/${symbol}-USD/spot`)
+    .then(response => response.json())
+    .then(data => {
+      const price = parseFloat(data.data.amount);
+      const change = (Math.random() - 0.5) * 10; // Mock change for now
+      
+      res.json({
+        symbol,
+        price,
+        change,
+        timestamp: Date.now()
+      });
+    })
+    .catch(error => {
+      console.error('Error fetching market data:', error);
+      res.status(500).json({ error: 'Failed to fetch market data' });
+    });
 });
 
 app.get('/api/signals', (req, res) => {
