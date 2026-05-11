@@ -365,14 +365,16 @@ const Workspace = () => {
 
                 {/* Market Narrative */}
                 <div className="text-sm text-gray-700 leading-relaxed">
-                  <p className="mb-3">
-                    {selectedCoin} is showing {priceChange >= 0 ? 'uptrend' : 'downtrend'} with 
-                    {Math.abs(priceChange || 0).toFixed(1)}% change.
+                  <p>
+                    {Math.random() > 0.5 
+                      ? `The move appears supported by strong participation, suggesting conviction behind the ${priceChange >= 0 ? 'rally' : 'recovery'}.`
+                      : `The move shows weakening participation with low conviction, indicating potential for further ${priceChange >= 0 ? 'weakness' : 'stabilization'}.`
+                    }
                   </p>
                   <p>
                     {Math.random() > 0.5 
-                      ? 'The move appears supported by strong participation, suggesting conviction behind the {priceChange >= 0 ? 'rally' : 'recovery'}.'
-                      : 'The move shows weakening participation with low conviction, indicating potential for further {priceChange >= 0 ? 'weakness' : 'stabilization'}.'
+                      ? `The move appears supported by strong participation, suggesting conviction behind the ${priceChange >= 0 ? 'rally' : 'recovery'}.`
+                      : `The move shows weakening participation with low conviction, indicating potential for further ${priceChange >= 0 ? 'weakness' : 'stabilization'}.`
                     }
                   </p>
                 </div>
