@@ -1,22 +1,26 @@
 import React from 'react';
-import io from 'socket.io-client';
-import Sparkline from './Sparkline.jsx';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Landing from './Landing.jsx';
+import Workspace from './Workspace.jsx';
+import MarketCalendar from './MarketCalendar.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
 import './index.css';
 
-const TradingDashboard = () => {
-  const [signals, setSignals] = React.useState([]);
-  const [marketSentiment, setMarketSentiment] = React.useState('NEUTRAL');
-  const [sentimentScore, setSentimentScore] = React.useState(0);
-  const [activeAlerts, setActiveAlerts] = React.useState(0);
-  const [liveFeed, setLiveFeed] = React.useState([]);
-  const [connectionStatus, setConnectionStatus] = React.useState('CONNECTING...');
-  const [lastUpdated, setLastUpdated] = React.useState(new Date());
-  const [notifications, setNotifications] = React.useState([]);
-  const [newSignalId, setNewSignalId] = React.useState(null);
-  const [expandedSignal, setExpandedSignal] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const [demoMode, setDemoMode] = React.useState(false);
-  const [connectionError, setConnectionError] = React.useState(null);
+const App = () => {
+  return (
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/workspace" element={<Workspace />} />
+          <Route path="/workspace/:coin" element={<Workspace />} />
+          <Route path="/calendar" element={<MarketCalendar />} />
+          <Route path="/tracking" element={<Tracking />} />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
+  );
+};
 
   // Helper function to get bias color
   const getBiasColor = (bias) => {
