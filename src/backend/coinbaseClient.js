@@ -19,9 +19,9 @@ class CoinbaseClient {
     }
 
     this.isConnecting = true;
-    console.log('🔌 Connecting to Coinbase WebSocket...');
+    console.log('🔌 Connecting to Coinbase Advanced Trade WebSocket...');
 
-    const wsUrl = 'wss://ws-feed.pro.coinbase.com';
+    const wsUrl = 'wss://advanced-trade-ws.coinbase.com';
 
     this.ws = new WebSocket(wsUrl);
 
@@ -61,13 +61,14 @@ class CoinbaseClient {
   subscribeToTickers() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const subscribeMessage = {
-        type: 'subscribe',
+        event: 'subscribe',
         product_ids: this.symbols,
-        channels: ['ticker']
+        channel: 'ticker',
+        api_key: null // Add API key if needed for Advanced Trade API
       };
       
       this.ws.send(JSON.stringify(subscribeMessage));
-      console.log('📡 Subscribed to Coinbase tickers');
+      console.log('📡 Subscribed to Coinbase Advanced Trade tickers');
     }
   }
 
@@ -136,8 +137,9 @@ class CoinbaseClient {
   // Get klines data for technical analysis
   async getKlines(symbol, interval = '1h', limit = 100) {
     try {
-      // Coinbase doesn't have a direct klines endpoint, so we'll use the products endpoint for candle data
-      const response = await fetch(`https://api.pro.coinbase.com/products/${symbol}-USD/candles?granularity=3600`);
+      // Use Coinbase Advanced Trade API for candles
+      const granularity = interval === '1h' ? 3600 : 86400; // 1 hour or 1 day
+      const response = await fetch(`https://api.exchange.coinbase.com/products/${symbol}-USD/candles?granularity=${granularity}`);
       const data = await response.json();
       
       // Check if Coinbase returned an error object instead of array data
