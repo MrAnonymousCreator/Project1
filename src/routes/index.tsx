@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { assets, type Asset } from "@/lib/market-data";
-import { WatchlistSidebar } from "@/components/WatchlistSidebar";
-import { NewsTicker } from "@/components/NewsTicker";
-import { AssetWorkspace } from "@/components/AssetWorkspace";
+import { assets, type Asset } from "../lib/market-data";
+import { WatchlistSidebar } from "../components/WatchlistSidebar";
+import { NewsTicker } from "../components/NewsTicker";
+import { AssetWorkspace } from "../components/AssetWorkspace";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/", {
   component: Index,
   head: () => ({
     meta: [

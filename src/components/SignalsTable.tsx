@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
-import { signals } from "@/lib/market-data";
-import { cn } from "@/lib/utils";
+import { signals } from "../lib/market-data";
+import { cn } from "../lib/utils";
 
 export function SignalsTable() {
   const [open, setOpen] = useState<number | null>(0);

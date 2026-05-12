@@ -1,5 +1,5 @@
 // Market data service for TwelveData integration
-import { TwelveDataClient } from '../backend/twelvedataClient';
+const TwelveDataClient = require('../backend/twelvedataClient') as any;
 
 export type Asset = {
   id: string;

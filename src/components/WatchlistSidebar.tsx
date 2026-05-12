@@ -1,8 +1,8 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
-import { assets, formatPrice, type Asset } from "@/lib/market-data";
+import { assets, formatPrice, type Asset } from "../lib/market-data";
 import { Sparkline } from "./Sparkline";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 type Props = {
   selectedId: string;

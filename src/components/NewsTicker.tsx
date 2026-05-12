@@ -1,5 +1,5 @@
-import { news } from "@/lib/market-data";
-import { cn } from "@/lib/utils";
+import { news } from "../lib/market-data";
+import { cn } from "../lib/utils";
 
 const tagTone: Record<string, string> = {
   Momentum: "bg-positive-soft/60 text-positive",
