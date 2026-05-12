@@ -11,7 +11,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['socket.io-client', 'react-router-dom', 'react', 'react-dom', '@tanstack/react-query-devtools', '@/lib/market-data', '@/lib/technical-indicators', '@/lib/utils']
+      external: []
     }
   }
 })

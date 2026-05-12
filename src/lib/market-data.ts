@@ -1,3 +1,6 @@
+// Market data service for TwelveData integration
+import { TwelveDataClient } from '../backend/twelvedataClient';
+
 export type Asset = {
   id: string;
   symbol: string;
@@ -9,6 +12,61 @@ export type Asset = {
   sparkline: number[];
   about: string;
 };
+
+class MarketDataService {
+  private twelvedataClient: TwelveDataClient;
+  private callbacks: Map<string, Function> = new Map();
+
+  constructor() {
+    this.twelvedataClient = new TwelveDataClient();
+  }
+
+  // Initialize the service
+  initialize() {
+    console.log('🚀 Initializing Market Data Service with TwelveData...');
+    
+    // Subscribe to market data
+    this.twelvedataClient.onMarketData((marketData: any) => {
+      this.processMarketData(marketData);
+    });
+    
+    // Connect to TwelveData WebSocket
+    this.twelvedataClient.connect();
+  }
+
+  // Process incoming market data
+  private processMarketData(data: any) {
+    // Emit to all callbacks
+    this.callbacks.forEach(callback => callback(data));
+  }
+
+  // Subscribe to market data updates
+  subscribe(callback: Function): string {
+    const id = Date.now().toString() + Math.random().toString();
+    this.callbacks.set(id, callback);
+    return id;
+  }
+
+  // Unsubscribe from market data updates
+  unsubscribe(id: string) {
+    this.callbacks.delete(id);
+  }
+
+  // Get current price
+  async getCurrentPrice(symbol: string): Promise<number> {
+    return await this.twelvedataClient.getCurrentPrice(symbol);
+  }
+
+  // Get klines data
+  async getKlines(symbol: string, interval: string = '1h', limit: number = 100): Promise<any[]> {
+    return await this.twelvedataClient.getKlines(symbol, interval, limit);
+  }
+
+  // Disconnect service
+  disconnect() {
+    this.twelvedataClient.disconnect();
+  }
+}
 
 function gen(seed: number, base: number, vol: number, n = 60): number[] {
   let s = seed;

@@ -1,32 +1,33 @@
-// Coinbase WebSocket Client - Real-time market data
+// TwelveData Client - Real-time market data
 const WebSocket = require('ws');
 
-class CoinbaseClient {
+class TwelveDataClient {
   constructor() {
     this.ws = null;
-    this.symbols = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'DOGE-USD', 'AVAX-USD', 'LINK-USD'];
+    this.symbols = ['BTC/USD', 'ETH/USD', 'SOL/USD', 'DOGE/USD', 'AVAX/USD', 'LINK/USD'];
     this.callbacks = {};
     this.reconnectInterval = 5000;
     this.isConnecting = false;
     this.fallbackMode = false;
     this.fallbackInterval = null;
+    this.apiKey = '31d3ac11306f4b978c40dcb91a572e62';
   }
 
-  // Connect to Coinbase WebSocket
+  // Connect to TwelveData WebSocket
   connect() {
     if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
       return;
     }
 
     this.isConnecting = true;
-    console.log('🔌 Connecting to Coinbase Advanced Trade WebSocket...');
+    console.log('🔌 Connecting to TwelveData WebSocket...');
 
-    const wsUrl = 'wss://advanced-trade-ws.coinbase.com';
+    const wsUrl = `wss://ws.twelvedata.com/v1/quotes/price?apikey=${this.apiKey}`;
 
     this.ws = new WebSocket(wsUrl);
 
     this.ws.on('open', () => {
-      console.log('✅ Connected to Coinbase WebSocket');
+      console.log('✅ Connected to TwelveData WebSocket');
       this.isConnecting = false;
       this.subscribeToTickers();
     });
@@ -43,7 +44,7 @@ class CoinbaseClient {
     this.ws.on('error', (error) => {
       console.error('❌ WebSocket error:', error);
       this.isConnecting = false;
-      console.log('🔄 Coinbase WebSocket blocked, switching to fallback mode');
+      console.log('🔄 TwelveData WebSocket blocked, switching to fallback mode');
       this.startFallbackMode();
     });
 
@@ -61,32 +62,32 @@ class CoinbaseClient {
   subscribeToTickers() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const subscribeMessage = {
-        event: 'subscribe',
-        product_ids: this.symbols,
-        channel: 'ticker',
-        api_key: null // Add API key if needed for Advanced Trade API
+        action: 'subscribe',
+        params: {
+          symbols: this.symbols
+        }
       };
       
       this.ws.send(JSON.stringify(subscribeMessage));
-      console.log('📡 Subscribed to Coinbase Advanced Trade tickers');
+      console.log('📡 Subscribed to TwelveData tickers');
     }
   }
 
   // Handle incoming WebSocket messages
   handleMessage(data) {
-    if (data.type === 'ticker') {
+    if (data.event === 'price') {
       const ticker = data;
-      const symbol = ticker.product_id;
+      const symbol = ticker.symbol;
       
       const marketData = {
-        symbol: symbol.replace('-USD', ''),
+        symbol: symbol.replace('/USD', ''),
         price: parseFloat(ticker.price),
-        change: parseFloat(ticker.price_24h || 0),
-        volume: parseFloat(ticker.volume_24h || 0),
-        high: parseFloat(ticker.high_24h || ticker.price),
-        low: parseFloat(ticker.low_24h || ticker.price),
-        open: parseFloat(ticker.open_24h || ticker.price),
-        timestamp: new Date(ticker.time || Date.now())
+        change: parseFloat(ticker.change || 0),
+        volume: parseFloat(ticker.volume || 0),
+        high: parseFloat(ticker.day_high || ticker.price),
+        low: parseFloat(ticker.day_low || ticker.price),
+        open: parseFloat(ticker.day_open || ticker.price),
+        timestamp: new Date(ticker.timestamp || Date.now())
       };
 
       // Emit to all callbacks
@@ -120,16 +121,16 @@ class CoinbaseClient {
   // Get current price via REST API
   async getCurrentPrice(symbol) {
     try {
-      const response = await fetch(`https://api.coinbase.com/v2/prices/${symbol}-USD/spot`);
+      const response = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${this.apiKey}`);
       const data = await response.json();
       
-      if (!response.ok) {
+      if (!response.ok || data.status !== 'ok') {
         throw new Error(`HTTP ${response.status}: ${data?.message || 'Unknown error'}`);
       }
 
-      return parseFloat(data.data.amount);
+      return parseFloat(data.price);
     } catch (error) {
-      console.error(`❌ Error fetching ${symbol} price from Coinbase:`, error);
+      console.error(`❌ Error fetching ${symbol} price from TwelveData:`, error);
       return this.getMockPrice(symbol);
     }
   }
@@ -137,27 +138,33 @@ class CoinbaseClient {
   // Get klines data for technical analysis
   async getKlines(symbol, interval = '1h', limit = 100) {
     try {
-      // Use Coinbase Advanced Trade API for candles
-      const granularity = interval === '1h' ? 3600 : 86400; // 1 hour or 1 day
-      const response = await fetch(`https://api.exchange.coinbase.com/products/${symbol}-USD/candles?granularity=${granularity}`);
+      // Map intervals to TwelveData format
+      const intervalMap = {
+        '1h': '1h',
+        '4h': '4h',
+        '1d': '1day'
+      };
+      
+      const twelveInterval = intervalMap[interval] || '1h';
+      const response = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${twelveInterval}&outputsize=${limit}&apikey=${this.apiKey}`);
       const data = await response.json();
       
-      // Check if Coinbase returned an error object instead of array data
-      if (!data || !Array.isArray(data)) {
-        console.error('❌ Coinbase API Error:', data);
+      // Check if TwelveData returned an error
+      if (!response.ok || data.status !== 'ok') {
+        console.error('❌ TwelveData API Error:', data);
         console.log('🔄 Using fallback mock data for', symbol);
         return this.generateMockKlines(symbol, limit);
       }
       
-      // Coinbase returns [timestamp, low, high, open, close, volume] format
-      return data.slice(-limit).map(candle => ({
-        timestamp: candle[0] * 1000, // Convert to milliseconds
-        open: parseFloat(candle[3]),
-        high: parseFloat(candle[2]),
-        low: parseFloat(candle[1]),
-        close: parseFloat(candle[4]),
-        volume: parseFloat(candle[5])
-      }));
+      // TwelveData returns array of values
+      return data.values.map(candle => ({
+        timestamp: new Date(candle.datetime).getTime(),
+        open: parseFloat(candle.open),
+        high: parseFloat(candle.high),
+        low: parseFloat(candle.low),
+        close: parseFloat(candle.close),
+        volume: parseFloat(candle.volume || 0)
+      })).slice(-limit);
     } catch (error) {
       console.error(`❌ Error fetching klines for ${symbol}:`, error);
       console.log('🔄 Using fallback mock data for', symbol);
@@ -205,7 +212,7 @@ class CoinbaseClient {
     return prices[symbol] || 100;
   }
 
-  // Start fallback mode when Coinbase is blocked
+  // Start fallback mode when TwelveData is blocked
   startFallbackMode() {
     this.fallbackMode = true;
     console.log('🔄 Starting fallback mode - generating mock data');
@@ -259,4 +266,4 @@ class CoinbaseClient {
   }
 }
 
-module.exports = CoinbaseClient;
+module.exports = TwelveDataClient;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
-import { stories } from "@/lib/market-data";
-import { cn } from "@/lib/utils";
+import { stories } from "../lib/market-data";
+import { cn } from "../lib/utils";
 
 export function StoryCards() {
   const [open, setOpen] = useState<number | null>(null);

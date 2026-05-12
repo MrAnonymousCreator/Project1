@@ -1,12 +1,12 @@
 // Signal Engine - Orchestrates all indicators and emits signals
-const CoinbaseClient = require('./coinbaseClient');
+const TwelveDataClient = require('./twelvedataClient');
 const RSI = require('./rsi');
 const MACD = require('./macd');
 const VolumeSpike = require('./volume');
 
 class SignalEngine {
   constructor() {
-    this.coinbaseClient = new CoinbaseClient();
+    this.twelvedataClient = new TwelveDataClient();
     this.rsi = new RSI(14);
     this.macd = new MACD();
     this.volumeSpike = new VolumeSpike(2.0, 20);
@@ -23,15 +23,15 @@ class SignalEngine {
 
   // Start the signal engine
   start() {
-    console.log('🚀 Starting Signal Engine with Coinbase...');
+    console.log('🚀 Starting Signal Engine with TwelveData...');
     
     // Subscribe to market data
-    this.coinbaseClient.onMarketData((marketData) => {
+    this.twelvedataClient.onMarketData((marketData) => {
       this.processMarketData(marketData);
     });
     
-    // Connect to Coinbase WebSocket
-    this.coinbaseClient.connect();
+    // Connect to TwelveData WebSocket
+    this.twelvedataClient.connect();
     
     // Start periodic analysis
     this.startPeriodicAnalysis();
@@ -41,11 +41,11 @@ class SignalEngine {
   async loadHistoricalData() {
     console.log('📊 Loading historical data...');
     
-    const symbols = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'DOGE-USD', 'AVAX-USD', 'LINK-USD'];
+    const symbols = ['BTC', 'ETH', 'SOL', 'DOGE', 'AVAX', 'LINK'];
     
     for (const symbol of symbols) {
       try {
-        const klines = await this.coinbaseClient.getKlines(symbol, '1h', 100);
+        const klines = await this.twelvedataClient.getKlines(symbol, '1h', 100);
         
         this.priceHistory[symbol] = klines.map(k => k.close);
         this.volumeHistory[symbol] = klines.map(k => k.volume);
@@ -62,7 +62,7 @@ class SignalEngine {
         
         console.log(`✅ Loaded ${klines.length} data points for ${symbol}`);
       } catch (error) {
-        console.error(`❌ Error loading data for ${symbol}:`, error);
+        console.error(`❌ Error loading historical data for ${symbol}:`, error);
       }
     }
   }

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { type Asset, formatBig, formatPrice } from "@/lib/market-data";
+import { type Asset, formatBig, formatPrice } from "../lib/market-data";
 import { PriceChart } from "./PriceChart";
 import { SignalsTable } from "./SignalsTable";
 import { MarketCalendar } from "./MarketCalendar";
 import { StoryCards } from "./StoryCards";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 const RANGES = ["1H", "1D", "1W", "1M", "1Y", "ALL"] as const;
 const VIEWS = ["Overview", "Calendar"] as const;

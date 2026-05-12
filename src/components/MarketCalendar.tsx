@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { buildCalendar } from "@/lib/market-data";
-import { cn } from "@/lib/utils";
+import { buildCalendar } from "../lib/market-data";
+import { cn } from "../lib/utils";
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
