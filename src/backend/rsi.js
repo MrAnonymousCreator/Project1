@@ -63,4 +63,4 @@ class RSI {
   }
 }
 
-module.exports = RSI;
+export default RSI;

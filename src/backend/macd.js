@@ -82,4 +82,4 @@ class MACD {
   }
 }
 
-module.exports = MACD;
+export default MACD;

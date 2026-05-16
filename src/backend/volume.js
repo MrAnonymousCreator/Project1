@@ -42,4 +42,4 @@ class VolumeSpike {
   }
 }
 
-module.exports = VolumeSpike;
+export default VolumeSpike;

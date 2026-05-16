@@ -1,9 +1,13 @@
-const express = require('express');
-const path = require('path');
-const { Server } = require('socket.io');
-const http = require('http');
-const SignalEngine = require('./src/backend/signalEngine');
-const TwelveDataClient = require('./src/backend/twelvedataClient');
+import express from 'express';
+import path from 'path';
+import { Server } from 'socket.io';
+import http from 'http';
+import { fileURLToPath } from 'url';
+import SignalEngine from './src/backend/signalEngine.js';
+import TwelveDataClient from './src/backend/twelvedataClient.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);

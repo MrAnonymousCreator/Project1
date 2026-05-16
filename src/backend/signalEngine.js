@@ -1,8 +1,8 @@
 // Signal Engine - Orchestrates all indicators and emits signals
-const TwelveDataClient = require('./twelvedataClient');
-const RSI = require('./rsi');
-const MACD = require('./macd');
-const VolumeSpike = require('./volume');
+import TwelveDataClient from './twelvedataClient.js';
+import RSI from './rsi.js';
+import MACD from './macd.js';
+import VolumeSpike from './volume.js';
 
 class SignalEngine {
   constructor() {
@@ -329,4 +329,4 @@ class SignalEngine {
   }
 }
 
-module.exports = SignalEngine;
+export default SignalEngine;

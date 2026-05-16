@@ -1,5 +1,5 @@
 // TwelveData Client - Real-time market data
-const WebSocket = require('ws');
+import WebSocket from 'ws';
 
 class TwelveDataClient {
   constructor() {
@@ -266,4 +266,4 @@ class TwelveDataClient {
   }
 }
 
-module.exports = TwelveDataClient;
+export default TwelveDataClient;
