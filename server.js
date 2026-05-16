@@ -3,12 +3,16 @@ const path = require('path');
 const { Server } = require('socket.io');
 const http = require('http');
 const SignalEngine = require('./src/backend/signalEngine');
+const TwelveDataClient = require('./src/backend/twelvedataClient');
 
 const app = express();
 const server = http.createServer(app);
 
 // Initialize signal engine
 const signalEngine = new SignalEngine();
+
+// Initialize TwelveData client
+const twelvedataClient = new TwelveDataClient();
 
 // Serve static files from dist directory (built React app)
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -24,27 +28,24 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.get('/api/market-data/:symbol', (req, res) => {
+app.get('/api/market-data/:symbol', async (req, res) => {
   const { symbol } = req.params;
-  
-  // Get current price from Coinbase
-  fetch(`https://api.coinbase.com/v2/prices/${symbol}-USD/spot`)
-    .then(response => response.json())
-    .then(data => {
-      const price = parseFloat(data.data.amount);
-      const change = (Math.random() - 0.5) * 10; // Mock change for now
-      
-      res.json({
-        symbol,
-        price,
-        change,
-        timestamp: Date.now()
-      });
-    })
-    .catch(error => {
-      console.error('Error fetching market data:', error);
-      res.status(500).json({ error: 'Failed to fetch market data' });
+
+  try {
+    // Get current price from TwelveData
+    const price = await twelvedataClient.getCurrentPrice(symbol);
+    const change = (Math.random() - 0.5) * 10; // Mock change for now
+
+    res.json({
+      symbol,
+      price,
+      change,
+      timestamp: Date.now()
     });
+  } catch (error) {
+    console.error('Error fetching market data:', error);
+    res.status(500).json({ error: 'Failed to fetch market data' });
+  }
 });
 
 app.get('/api/signals', (req, res) => {
